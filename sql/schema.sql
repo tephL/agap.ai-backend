@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict r27BVsLSqJSeo5kZhjlcmNxPFaLTeLAkzPT9J7FFNwVFmQcQKr50yHEJRFdM2MM
+\restrict XptlUNvbAw3JUkTLWa9YWkwAtUaM1AGFbINWdwdpVsa1zQh8asnVAD3rWb1lTF5
 
 -- Dumped from database version 15.18 (Debian 15.18-0+deb12u1)
 -- Dumped by pg_dump version 15.18 (Debian 15.18-0+deb12u1)
@@ -216,6 +216,9 @@ COPY public.family (family_id, name) FROM stdin;
 --
 
 COPY public.people (person_id, first_name, middle_name, last_name, gender, disabilities, age, city, barangay, street, address) FROM stdin;
+6	rhez	\N	astrera	male	\N	18	malolos	pinagbakahan	\N	lot 7
+7	rhez	\N	astrera	male	\N	18	malolos	pinagbakahan	\N	lot 7
+8	rhez	\N	lee	male	\N	18	malolos	pinagbakahan	\N	lot 7
 \.
 
 
@@ -234,7 +237,7 @@ COPY public.roles (role_id, name) FROM stdin;
 --
 
 COPY public.users (user_id, username, phone_number, created_at, archived_at, person_id, role_id, family_id, hashed_password) FROM stdin;
-6	tephL	090909	2026-08-18 10:45:56.00047+08	\N	\N	100	\N	$2b$10$48KRv.GiCyNOZu/c3x5aUe0nqA/U4UzUxgZzlLOgv4DUAkwTadGpC
+6	tephL	090909	2026-08-18 10:45:56.00047+08	\N	8	100	\N	$2b$10$48KRv.GiCyNOZu/c3x5aUe0nqA/U4UzUxgZzlLOgv4DUAkwTadGpC
 \.
 
 
@@ -249,7 +252,7 @@ SELECT pg_catalog.setval('public.family_family_id_seq', 1, false);
 -- Name: people_person_id_seq; Type: SEQUENCE SET; Schema: public; Owner: tephl
 --
 
-SELECT pg_catalog.setval('public.people_person_id_seq', 1, false);
+SELECT pg_catalog.setval('public.people_person_id_seq', 8, true);
 
 
 --
@@ -263,7 +266,7 @@ SELECT pg_catalog.setval('public.roles_role_id_seq', 1, false);
 -- Name: users_user_id_seq; Type: SEQUENCE SET; Schema: public; Owner: tephl
 --
 
-SELECT pg_catalog.setval('public.users_user_id_seq', 8, true);
+SELECT pg_catalog.setval('public.users_user_id_seq', 9, true);
 
 
 --
@@ -342,5 +345,5 @@ ALTER TABLE ONLY public.users
 -- PostgreSQL database dump complete
 --
 
-\unrestrict r27BVsLSqJSeo5kZhjlcmNxPFaLTeLAkzPT9J7FFNwVFmQcQKr50yHEJRFdM2MM
+\unrestrict XptlUNvbAw3JUkTLWa9YWkwAtUaM1AGFbINWdwdpVsa1zQh8asnVAD3rWb1lTF5
 
