@@ -29,7 +29,14 @@ export async function login(req, res){
         const token = jwt.generateToken({
             username: user.username,
             user_id: user.user_id
-        })
+        });
+
+        res.cookie("token", token, {
+            httpOnly: true, 
+            secure: process.env.DEV != true, 
+            sameSite: "lax", 
+            maxAge: 24 * 60 * 60 * 1000
+        });
 
         return res.status(200).json({
             message: "Login successful",
