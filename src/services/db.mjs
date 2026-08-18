@@ -9,7 +9,7 @@ const pool = new Pool({
     host: DEV ? 'localhost' : process.env.DB_HOST, 
     password: process.env.DB_PASSWORD, 
     database: 'agap', 
-    port: 5432
+    port: process.env.DB_PORT
 });
 
 export async function query(text, values){
