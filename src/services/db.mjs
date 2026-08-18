@@ -1,8 +1,5 @@
 import { Pool } from "pg";
-import dotenv from 'dotenv';
-dotenv.config();
-
-const DEV = process.env.DEV;
+import { DEV } from '#/config/env.mjs';
 
 const pool = new Pool({
     user: process.env.DB_USERNAME, 
@@ -12,6 +9,6 @@ const pool = new Pool({
     port: 5432
 });
 
-export async function query(text, values){
-    return await pool.query(text, values);
+export function query(text, values){
+    return pool.query(text, values);
 }
