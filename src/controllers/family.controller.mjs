@@ -13,8 +13,8 @@ export async function createFamily(req, res) {
 
 export async function getFamilies(req, res) {
   try {
-    const limit = Math.min(Number(req.query.limit) || 50, 100);
-    const offset = Number(req.query.offset) || 0;
+    const limit = Math.min(Math.max(Number(req.query.limit) || 50, 1), 100);
+    const offset = Math.max(Number(req.query.offset) || 0, 0);
     const families = await familyService.getFamilies({ limit, offset });
     res.status(200).json(families);
   } catch (err) {
