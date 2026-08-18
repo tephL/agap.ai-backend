@@ -15,9 +15,9 @@ export const validateNewUser = [
 ];
 
 export const validateLogin = [
-    body('username')
+    body('phone_number')
         .notEmpty()
-        .withMessage("Username is required"), 
+        .withMessage("Phone number is required"), 
     body('password')
         .notEmpty()
         .withMessage("Password is required")

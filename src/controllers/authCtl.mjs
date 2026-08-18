@@ -1,5 +1,7 @@
 import * as userServ from '#/services/userServ.mjs';
 import { matchedData } from 'express-validator';
+import * as jwt from '#/services/jwtHelper.mjs';
+import { comparePassword } from '#/services/hasher.mjs';
 
 export async function createUser(req, res){
     try{
@@ -19,8 +21,21 @@ export async function createUser(req, res){
 
 export async function login(req, res){
     try{
-        const { username, password }  = matchedData(req);
-        
+        const { phone_number, password }  = matchedData(req);
+        const user = await userServ.getUserWithPhone(phone_number);
+        const isPassCorrect = comparePassword(password, user.hashed_password);
+        if(!isPassCorrect) return res.sendStatus(401);
+
+        const token = jwt.generateToken({
+            username: user.username,
+            user_id: user.user_id
+        })
+
+        return res.status(200).json({
+            message: "Login successful",
+            token
+        });
+
     } catch(err){
         console.log(err);
         return res.sendStatus(500);
