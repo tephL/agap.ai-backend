@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict Xs9iCwINWrZEibwaRLkwQwngccIRhqjsAgczoJODEBAd0ikan0yfjq3asNlenSK
+\restrict Gx3gFjoZnxggDopvLUBruBOnzHPeZ3dhQZbZ5TS3rKujd96SVv5SDHlyYpzqeSL
 
 -- Dumped from database version 15.18 (Debian 15.18-0+deb12u1)
 -- Dumped by pg_dump version 15.18 (Debian 15.18-0+deb12u1)
@@ -223,6 +223,8 @@ COPY public.people (person_id, first_name, middle_name, last_name, gender, disab
 --
 
 COPY public.roles (role_id, name) FROM stdin;
+100	citizens
+911	dispatcher
 \.
 
 
@@ -338,5 +340,5 @@ ALTER TABLE ONLY public.users
 -- PostgreSQL database dump complete
 --
 
-\unrestrict Xs9iCwINWrZEibwaRLkwQwngccIRhqjsAgczoJODEBAd0ikan0yfjq3asNlenSK
+\unrestrict Gx3gFjoZnxggDopvLUBruBOnzHPeZ3dhQZbZ5TS3rKujd96SVv5SDHlyYpzqeSL
 
