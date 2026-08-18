@@ -26,3 +26,21 @@ export async function getPersonById(req, res){
         return res.sendStatus(500);
     }
 }
+
+export async function editPersonById(req, res){
+    try{
+        const { person_id } = req.params;
+        const updates = matchedData(req);
+        const { user_id } = whoIsUser(req);
+
+        const personBelongsToUser = await peopleServ.isPersonOwnedByUser({ user_id, person_id });
+        if(!personBelongsToUser) return res.sendStatus(403);
+        if(Object.entries(updates).length == 0) return res.status(400).json({ message: "Nothing to update" });
+
+        const person = await peopleServ.editPersonDetails({ person_id, ...updates });
+        return res.sendStatus(201);
+    } catch(err){
+        console.log(err);
+        return res.sendStatus(500);
+    }
+}
