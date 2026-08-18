@@ -35,3 +35,28 @@ export async function getPersonById(person_id){
         throw err;
     }
 }
+
+export async function isPersonOwnedByUser({ person_id, user_id }){
+    try{
+        const text = "SELECT * FROM users WHERE person_id = $1 AND user_id = $2";
+        const values = [person_id, user_id];
+        const found = await query(text, values);
+        return found.rows.length == 1;
+    } catch(err){
+        throw err;
+    }
+}
+
+export async function editPersonDetails({ person_id, ...updates }){
+    try{
+        const keys = Object.keys(updates);
+        let i = 2;
+        const placeholders = Object.entries(updates).map(([key]) => `${key} = $${i++}`);
+        const text = `UPDATE people SET ${placeholders.join(', ')} WHERE person_id = $1`;
+        const values = [person_id, ...Object.values(updates)];
+        const person = await query(text, values);
+        return;
+    } catch(err){
+        throw err;
+    }
+}

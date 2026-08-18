@@ -16,4 +16,10 @@ router.get('/:person_id',
     peopleCtl.getPersonById
 );
 
+router.patch('/:person_id', 
+    peopleMid.validateUpdatePerson,
+    helperMid.catchValidationError, 
+    peopleCtl.editPersonById
+);
+
 export default router
