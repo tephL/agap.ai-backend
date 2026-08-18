@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict Gx3gFjoZnxggDopvLUBruBOnzHPeZ3dhQZbZ5TS3rKujd96SVv5SDHlyYpzqeSL
+\restrict r27BVsLSqJSeo5kZhjlcmNxPFaLTeLAkzPT9J7FFNwVFmQcQKr50yHEJRFdM2MM
 
 -- Dumped from database version 15.18 (Debian 15.18-0+deb12u1)
 -- Dumped by pg_dump version 15.18 (Debian 15.18-0+deb12u1)
@@ -144,9 +144,10 @@ CREATE TABLE public.users (
     phone_number character varying(20),
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     archived_at timestamp with time zone,
-    person_id integer NOT NULL,
+    person_id integer,
     role_id integer NOT NULL,
-    family_id integer
+    family_id integer,
+    hashed_password character varying(255)
 );
 
 
@@ -232,7 +233,8 @@ COPY public.roles (role_id, name) FROM stdin;
 -- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: tephl
 --
 
-COPY public.users (user_id, username, phone_number, created_at, archived_at, person_id, role_id, family_id) FROM stdin;
+COPY public.users (user_id, username, phone_number, created_at, archived_at, person_id, role_id, family_id, hashed_password) FROM stdin;
+6	tephL	090909	2026-08-18 10:45:56.00047+08	\N	\N	100	\N	$2b$10$48KRv.GiCyNOZu/c3x5aUe0nqA/U4UzUxgZzlLOgv4DUAkwTadGpC
 \.
 
 
@@ -261,7 +263,7 @@ SELECT pg_catalog.setval('public.roles_role_id_seq', 1, false);
 -- Name: users_user_id_seq; Type: SEQUENCE SET; Schema: public; Owner: tephl
 --
 
-SELECT pg_catalog.setval('public.users_user_id_seq', 1, false);
+SELECT pg_catalog.setval('public.users_user_id_seq', 8, true);
 
 
 --
@@ -340,5 +342,5 @@ ALTER TABLE ONLY public.users
 -- PostgreSQL database dump complete
 --
 
-\unrestrict Gx3gFjoZnxggDopvLUBruBOnzHPeZ3dhQZbZ5TS3rKujd96SVv5SDHlyYpzqeSL
+\unrestrict r27BVsLSqJSeo5kZhjlcmNxPFaLTeLAkzPT9J7FFNwVFmQcQKr50yHEJRFdM2MM
 
