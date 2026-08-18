@@ -11,4 +11,10 @@ router.post('/register',
     authCtl.createUser
 );
 
+router.post('/login', 
+    authMid.validateLogin,
+    helperMid.catchValidationError,
+    authCtl.login 
+);
+
 export default router;

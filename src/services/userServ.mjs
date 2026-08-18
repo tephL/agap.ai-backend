@@ -12,3 +12,16 @@ export async function createUser({ username, password, phone_number }){
         throw err;
     }
 }
+
+export async function getUserWithPhone(phone_number){
+    try{
+        const user = await query(
+            "SELECT * from users WHERE phone_number = $1;",
+            [phone_number]
+        );
+        return user.rows[0];
+    } catch(err){
+        console.log(err);
+        return res.sendStatus(500);
+    }
+}

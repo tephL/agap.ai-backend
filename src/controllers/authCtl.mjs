@@ -16,3 +16,13 @@ export async function createUser(req, res){
         return res.sendStatus(500);
     }
 }
+
+export async function login(req, res){
+    try{
+        const { username, password }  = matchedData(req);
+        
+    } catch(err){
+        console.log(err);
+        return res.sendStatus(500);
+    }
+}
