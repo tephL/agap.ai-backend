@@ -31,7 +31,7 @@ export async function getFamilyMembers(familyId) {
   const result = await query(
     `SELECT u.user_id, u.username, u.phone_number, p.first_name, p.last_name, p.age
      FROM users u
-     JOIN people p ON p.person_id = u.person_id
+     LEFT JOIN people p ON p.person_id = u.person_id
      WHERE u.family_id = $1 AND u.archived_at IS NULL
      ORDER BY u.user_id`,
     [familyId]
