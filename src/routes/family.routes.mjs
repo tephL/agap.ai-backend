@@ -6,8 +6,10 @@ import {
   updateFamilyValidator,
   familyIdParamValidator,
 } from '#/validators/family.validators.mjs';
+import * as helperMid from '#/middlewares/helper-mid.mjs';
 
 const router = Router();
+router.use(helperMid.isUserLoggedIn);
 
 router.post('/', createFamilyValidator, validate, familyController.createFamily);
 router.get('/', familyController.getFamilies);
