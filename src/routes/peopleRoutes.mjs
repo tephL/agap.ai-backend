@@ -1,13 +1,19 @@
 import { Router } from "express";
 import * as helperMid from '#/middlewares/helper-mid.mjs';
+import * as peopleMid from '#/middlewares/people-validators.mjs';
+import * as peopleCtl from '#/controllers/peopleCtl.mjs';
 
 const router = Router();
 router.use(helperMid.isUserLoggedIn);
 
 router.post('/',
-    (req, res) => {
-        return res.sendStatus(200);
-    }
+    peopleMid.validateNewPerson,
+    helperMid.catchValidationError, 
+    peopleCtl.createPersonalDetails
+);
+
+router.get('/:person_id',
+    peopleCtl.getPersonById
 );
 
 export default router

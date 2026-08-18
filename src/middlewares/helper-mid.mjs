@@ -14,7 +14,16 @@ export function isUserLoggedIn(req, res, next){
     // TODO: add a condition for expo auth too
     if(!rawHeader) return res.sendStatus(401);
 
+    const decoded = whoIsUser(req);
+    next();
+}
+
+export function whoIsUser(req){
+    const rawHeader = req.headers.cookie;
+    // TODO: add a getter for expo clients
+    if(!rawHeader) return null;
+
     const token = rawHeader.split('=')[1];
     const decoded = verifyToken(token);
-    next();
+    return decoded;
 }
