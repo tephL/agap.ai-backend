@@ -12,7 +12,7 @@ export function catchValidationError(req, res, next) {
 export function isUserLoggedIn(req, res, next){
     const rawHeader = req.headers.cookie;
     // TODO: add a condition for expo auth too
-    if(!rawHeader) return res.sendStatus(401);
+    if(!rawHeader) return res.sendStagit tus(401);
 
     const decoded = whoIsUser(req);
     next();
