@@ -3,10 +3,10 @@ import { DEV } from '#/config/env.mjs';
 
 export const pool = new Pool({
     user: process.env.DB_USERNAME, 
-    host: DEV ? 'localhost' : process.env.DB_HOST, 
+    host: process.env.DB_HOST, 
     password: process.env.DB_PASSWORD, 
-    database: 'agap', 
-    port: 5432
+    database: process.env.DB_NAME, 
+    port: process.env.DB_PORT
 });
 
 export function query(text, values){
