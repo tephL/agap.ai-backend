@@ -11,6 +11,10 @@ export const createFamilyValidator = [
     .trim()
     .notEmpty().withMessage('name is required')
     .isLength({ max: 150 }).withMessage('name must be 150 characters or fewer'),
+  body('relation')
+    .trim()
+    .notEmpty().withMessage('relation is required')
+    .isLength({ max: 50 }).withMessage('relation must be 50 characters or fewer'),
 ];
 
 export const updateFamilyValidator = [
@@ -19,4 +23,15 @@ export const updateFamilyValidator = [
     .trim()
     .notEmpty().withMessage('name is required')
     .isLength({ max: 150 }).withMessage('name must be 150 characters or fewer'),
+];
+
+export const inviteMemberValidator = [
+  ...familyIdParamValidator,
+  body('phone_number')
+    .trim()
+    .notEmpty().withMessage('phone_number is required'),
+  body('relation')
+    .trim()
+    .notEmpty().withMessage('relation is required')
+    .isLength({ max: 50 }).withMessage('relation must be 50 characters or fewer'),
 ];

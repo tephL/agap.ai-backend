@@ -1,21 +1,22 @@
 import { Router } from 'express';
 import * as familyController from '#/controllers/family.controller.mjs';
 import { validate } from '#/middlewares/validate.mjs';
+import { isUserLoggedIn } from '#/middlewares/helper-mid.mjs';
 import {
   createFamilyValidator,
   updateFamilyValidator,
   familyIdParamValidator,
+  inviteMemberValidator,
 } from '#/validators/family.validators.mjs';
-import * as helperMid from '#/middlewares/helper-mid.mjs';
 
 const router = Router();
-router.use(helperMid.isUserLoggedIn);
 
-router.post('/', createFamilyValidator, validate, familyController.createFamily);
+router.post('/', isUserLoggedIn, createFamilyValidator, validate, familyController.createFamily);
 router.get('/', familyController.getFamilies);
 router.get('/:id', familyIdParamValidator, validate, familyController.getFamilyById);
 router.get('/:id/members', familyIdParamValidator, validate, familyController.getFamilyMembers);
-router.put('/:id', updateFamilyValidator, validate, familyController.updateFamily);
-router.delete('/:id', familyIdParamValidator, validate, familyController.deleteFamily);
+router.put('/:id', isUserLoggedIn, updateFamilyValidator, validate, familyController.updateFamily);
+router.delete('/:id', isUserLoggedIn, familyIdParamValidator, validate, familyController.deleteFamily);
+router.post('/:id/invite', isUserLoggedIn, inviteMemberValidator, validate, familyController.inviteMember);
 
 export default router;

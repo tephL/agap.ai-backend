@@ -1,13 +1,31 @@
-import { query } from '#/services/db.mjs';
+import { query, withTransaction } from '#/services/db.mjs';
 
 const FAMILY_COLUMNS = 'family_id, name';
 
-export async function createFamily(name) {
+export async function createFamilyWithCreator(name, relation, userId) {
+  return withTransaction(async (client) => {
+    const familyResult = await client.query(
+      `INSERT INTO family (name, created_by) VALUES ($1, $2) RETURNING family_id, name`,
+      [name, userId]
+    );
+    const family = familyResult.rows[0];
+
+    await client.query(
+      `INSERT INTO family_members (family_id, user_id, relation, status)
+       VALUES ($1, $2, $3, 'accepted')`,
+      [family.family_id, userId, relation]
+    );
+
+    return family;
+  });
+}
+
+export async function isFamilyCreator(familyId, userId) {
   const result = await query(
-    `INSERT INTO family (name) VALUES ($1) RETURNING ${FAMILY_COLUMNS}`,
-    [name]
+    `SELECT 1 FROM family WHERE family_id = $1 AND created_by = $2`,
+    [familyId, userId]
   );
-  return result.rows[0];
+  return result.rows.length > 0;
 }
 
 export async function getFamilies({ limit = 50, offset = 0 } = {}) {
@@ -26,17 +44,25 @@ export async function getFamilyById(familyId) {
   return result.rows[0] ?? null;
 }
 
-// Bonus: useful in a disaster context — who's actually in this family unit
 export async function getFamilyMembers(familyId) {
   const result = await query(
-    `SELECT u.user_id, u.username, u.phone_number, p.first_name, p.last_name, p.age
-     FROM users u
+    `SELECT u.user_id, u.username, u.phone_number, p.first_name, p.last_name, p.age, fm.relation
+     FROM family_members fm
+     JOIN users u ON u.user_id = fm.user_id
      LEFT JOIN people p ON p.person_id = u.person_id
-     WHERE u.family_id = $1 AND u.archived_at IS NULL
-     ORDER BY u.user_id`,
+     WHERE fm.family_id = $1 AND fm.status = 'accepted' AND u.archived_at IS NULL
+     ORDER BY fm.family_member_id`,
     [familyId]
   );
   return result.rows;
+}
+
+export async function isAcceptedMember(familyId, userId) {
+  const result = await query(
+    `SELECT 1 FROM family_members WHERE family_id = $1 AND user_id = $2 AND status = 'accepted'`,
+    [familyId, userId]
+  );
+  return result.rows.length > 0;
 }
 
 export async function updateFamily(familyId, name) {
@@ -54,3 +80,4 @@ export async function deleteFamily(familyId) {
   );
   return result.rows[0] ?? null;
 }
+
