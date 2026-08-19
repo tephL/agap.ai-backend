@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict F28oYEbys6LuXS33WdQZZUNCZCjkSSoWABP1XvWyJsthc0hNtY3vZmesAz6gzty
+\restrict q5r4WfykBBquSbcVzRr1r5FsWU5WGAE2kxxOb7oYeTcFjbwA9tai0EAJ5Eq6DoP
 
 -- Dumped from database version 17.10 (Debian 17.10-0+deb13u1)
 -- Dumped by pg_dump version 17.10 (Debian 17.10-0+deb13u1)
@@ -103,7 +103,43 @@ ALTER SEQUENCE public.family_members_family_member_id_seq
 OWNED BY public.family_members.family_member_id;
 
 --
--- Name: people; Type: TABLE; Schema: public; Owner: postgres
+-- Name: images; Type: TABLE; Schema: public; Owner: tephl
+--
+
+CREATE TABLE public.images (
+    image_id integer NOT NULL,
+    public_url text,
+    created_at timestamp with time zone DEFAULT now(),
+    submitted_by integer
+);
+
+
+ALTER TABLE public.images OWNER TO tephl;
+
+--
+-- Name: images_image_id_seq; Type: SEQUENCE; Schema: public; Owner: tephl
+--
+
+CREATE SEQUENCE public.images_image_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.images_image_id_seq OWNER TO tephl;
+
+--
+-- Name: images_image_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: tephl
+--
+
+ALTER SEQUENCE public.images_image_id_seq OWNED BY public.images.image_id;
+
+
+--
+-- Name: people; Type: TABLE; Schema: public; Owner: tephl
 --
 
 CREATE TABLE public.people (
@@ -229,6 +265,13 @@ ALTER TABLE ONLY public.family
     ALTER COLUMN family_id
     SET DEFAULT nextval('public.family_family_id_seq'::regclass);
 
+
+--
+-- Name: images image_id; Type: DEFAULT; Schema: public; Owner: tephl
+--
+
+ALTER TABLE ONLY public.images ALTER COLUMN image_id SET DEFAULT nextval('public.images_image_id_seq'::regclass);
+
 --
 -- Name: family_members family_member_id; Type: DEFAULT; Schema: public; Owner: postgres
 --
@@ -283,7 +326,17 @@ FROM stdin;
 \.
 
 --
--- Data for Name: people; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: images; Type: TABLE DATA; Schema: public; Owner: tephl
+--
+
+COPY public.images (image_id, public_url, created_at, submitted_by) FROM stdin;
+1	http://res.cloudinary.com/pi52m6i7/image/upload/v1787127573/2026_08_19/ddwwnyi1urf8iytz0rfw.png	\N	6
+2	http://res.cloudinary.com/pi52m6i7/image/upload/v1787127677/2026_08_19/uoawvwow8n6fpioamidm.png	2026-08-19 16:21:24.457726+08	6
+\.
+
+
+--
+-- Data for Name: people; Type: TABLE DATA; Schema: public; Owner: tephl
 --
 
 COPY public.people
@@ -313,12 +366,9 @@ FROM stdin;
 6	tephL	090909	2026-08-18 10:45:56.00047+08	\N	8	100	\N	$2b$10$48KRv.GiCyNOZu/c3x5aUe0nqA/U4UzUxgZzlLOgv4DUAkwTadGpC
 9	testuser	09171234567	2026-08-18 01:38:56.616648-04	\N	\N	100	3	$2b$10$WK6GqTA209MPPWbIVJC3PenLy8bmLk/KWu5IwEBt8iXrTNuvNnSM.
 10	newuser2	09181234567	2026-08-18 03:47:24.300473-04	\N	\N	100	1	$2b$10$vuirAue9xxnSVpzB1N4aV.RAGtYKnUtOD7fniL2W4btNv6UKiVOse
-11	mother_45	0917450	2026-08-19 00:49:22.090434-04	\N	\N	100	\N	$2b$10$Oc2VPcDyaqJhIpCJwS4yaeP9fQheaMuxSvWO9mgVlQFQ.4reCpdmO
-12	son_45	0918451	2026-08-19 00:49:22.933997-04	\N	\N	100	\N	$2b$10$UPUZbOxzUYExyi0EIJXcn.K/81jWxYJ8J1.tEWJwZIrMMxdTk5FKy
-13	mother_628	09176280	2026-08-19 01:05:51.031106-04	\N	\N	100	\N	$2b$10$QL3KHhin48So1AEN8fItGeeN/DS0GFwcP2gWI0yOBJkczSFhKexyu
-14	son_628	09186281	2026-08-19 01:05:51.735953-04	\N	\N	100	\N	$2b$10$Ib5ExQmyBXASDRpg2GuD/unPxBo1loK0YYNyMTUh.b4IE2DrCWnsm
-15	mother_28422	0917284220	2026-08-19 01:11:21.082703-04	\N	\N	100	\N	$2b$10$HhuKZXPPFicW9G9gbTQcReG8FEcyvcDJk7tqBpi/3o6Zn70uFZ7kK
-16	son_28422	0918284221	2026-08-19 01:11:21.806642-04	\N	\N	100	\N	$2b$10$XjKJ.lbjWuOOKD/YIf43QeK9VUqup.a7msUuhU3SsEyUhu1mulRYW
+11	tungtungsahur	9662081096	2026-08-19 15:13:29.065517+08	\N	\N	100	\N	$2b$10$2wHhpLGpc5/GpJuKDYe6feyzvMbF8ZAmkv4rmV/p1UYEokSEMJIgC
+12	testtest	9662081099	2026-08-19 15:25:49.265533+08	\N	\N	100	\N	$2b$10$7BsclZj/EI112pIdI1cf7uFdGy4BxAQUP5j14QdclPnlZ8X1OZq4K
+
 \.
 
 --
@@ -330,6 +380,13 @@ SELECT pg_catalog.setval(
     6,
     true
 );
+
+--
+-- Name: images_image_id_seq; Type: SEQUENCE SET; Schema: public; Owner: tephl
+--
+
+SELECT pg_catalog.setval('public.images_image_id_seq', 2, true);
+
 
 --
 -- Name: family_members_family_member_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
@@ -371,6 +428,8 @@ SELECT pg_catalog.setval(
     true
 );
 
+SELECT pg_catalog.setval('public.users_user_id_seq', 12, true);
+
 --
 -- Name: family_members family_members_family_id_user_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
@@ -378,7 +437,7 @@ SELECT pg_catalog.setval(
 ALTER TABLE ONLY public.family_members
     ADD CONSTRAINT family_members_family_id_user_id_key
     UNIQUE (family_id, user_id);
-
+  
 --
 -- Name: family_members family_members_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
@@ -446,6 +505,15 @@ WHERE ((status)::text = 'accepted'::text);
 
 --
 -- Name: family family_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: images images_users_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: tephl
+--
+
+ALTER TABLE ONLY public.images
+    ADD CONSTRAINT images_users_id_fkey FOREIGN KEY (submitted_by) REFERENCES public.users(user_id);
+
+
+--
+-- Name: users users_family_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: tephl
 --
 
 ALTER TABLE ONLY public.family
@@ -507,4 +575,5 @@ ALTER TABLE ONLY public.users
 -- PostgreSQL database dump complete
 --
 
-\unrestrict F28oYEbys6LuXS33WdQZZUNCZCjkSSoWABP1XvWyJsthc0hNtY3vZmesAz6gzty
+\unrestrict q5r4WfykBBquSbcVzRr1r5FsWU5WGAE2kxxOb7oYeTcFjbwA9tai0EAJ5Eq6DoP
+
