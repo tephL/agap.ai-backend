@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict XptlUNvbAw3JUkTLWa9YWkwAtUaM1AGFbINWdwdpVsa1zQh8asnVAD3rWb1lTF5
+\restrict q5r4WfykBBquSbcVzRr1r5FsWU5WGAE2kxxOb7oYeTcFjbwA9tai0EAJ5Eq6DoP
 
 -- Dumped from database version 15.18 (Debian 15.18-0+deb12u1)
 -- Dumped by pg_dump version 15.18 (Debian 15.18-0+deb12u1)
@@ -54,6 +54,42 @@ ALTER TABLE public.family_family_id_seq OWNER TO tephl;
 --
 
 ALTER SEQUENCE public.family_family_id_seq OWNED BY public.family.family_id;
+
+
+--
+-- Name: images; Type: TABLE; Schema: public; Owner: tephl
+--
+
+CREATE TABLE public.images (
+    image_id integer NOT NULL,
+    public_url text,
+    created_at timestamp with time zone DEFAULT now(),
+    submitted_by integer
+);
+
+
+ALTER TABLE public.images OWNER TO tephl;
+
+--
+-- Name: images_image_id_seq; Type: SEQUENCE; Schema: public; Owner: tephl
+--
+
+CREATE SEQUENCE public.images_image_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.images_image_id_seq OWNER TO tephl;
+
+--
+-- Name: images_image_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: tephl
+--
+
+ALTER SEQUENCE public.images_image_id_seq OWNED BY public.images.image_id;
 
 
 --
@@ -183,6 +219,13 @@ ALTER TABLE ONLY public.family ALTER COLUMN family_id SET DEFAULT nextval('publi
 
 
 --
+-- Name: images image_id; Type: DEFAULT; Schema: public; Owner: tephl
+--
+
+ALTER TABLE ONLY public.images ALTER COLUMN image_id SET DEFAULT nextval('public.images_image_id_seq'::regclass);
+
+
+--
 -- Name: people person_id; Type: DEFAULT; Schema: public; Owner: tephl
 --
 
@@ -208,6 +251,16 @@ ALTER TABLE ONLY public.users ALTER COLUMN user_id SET DEFAULT nextval('public.u
 --
 
 COPY public.family (family_id, name) FROM stdin;
+\.
+
+
+--
+-- Data for Name: images; Type: TABLE DATA; Schema: public; Owner: tephl
+--
+
+COPY public.images (image_id, public_url, created_at, submitted_by) FROM stdin;
+1	http://res.cloudinary.com/pi52m6i7/image/upload/v1787127573/2026_08_19/ddwwnyi1urf8iytz0rfw.png	\N	6
+2	http://res.cloudinary.com/pi52m6i7/image/upload/v1787127677/2026_08_19/uoawvwow8n6fpioamidm.png	2026-08-19 16:21:24.457726+08	6
 \.
 
 
@@ -238,6 +291,9 @@ COPY public.roles (role_id, name) FROM stdin;
 
 COPY public.users (user_id, username, phone_number, created_at, archived_at, person_id, role_id, family_id, hashed_password) FROM stdin;
 6	tephL	090909	2026-08-18 10:45:56.00047+08	\N	8	100	\N	$2b$10$48KRv.GiCyNOZu/c3x5aUe0nqA/U4UzUxgZzlLOgv4DUAkwTadGpC
+10	tungtung	9662081096	2026-08-19 15:12:30.965369+08	\N	\N	100	\N	$2b$10$ocKveHa0blI6rN3XVJUK1.Zfn5Q8jsZbKICfivMWHIgIoYZg..loW
+11	tungtungsahur	9662081096	2026-08-19 15:13:29.065517+08	\N	\N	100	\N	$2b$10$2wHhpLGpc5/GpJuKDYe6feyzvMbF8ZAmkv4rmV/p1UYEokSEMJIgC
+12	testtest	9662081099	2026-08-19 15:25:49.265533+08	\N	\N	100	\N	$2b$10$7BsclZj/EI112pIdI1cf7uFdGy4BxAQUP5j14QdclPnlZ8X1OZq4K
 \.
 
 
@@ -246,6 +302,13 @@ COPY public.users (user_id, username, phone_number, created_at, archived_at, per
 --
 
 SELECT pg_catalog.setval('public.family_family_id_seq', 1, false);
+
+
+--
+-- Name: images_image_id_seq; Type: SEQUENCE SET; Schema: public; Owner: tephl
+--
+
+SELECT pg_catalog.setval('public.images_image_id_seq', 2, true);
 
 
 --
@@ -266,7 +329,7 @@ SELECT pg_catalog.setval('public.roles_role_id_seq', 1, false);
 -- Name: users_user_id_seq; Type: SEQUENCE SET; Schema: public; Owner: tephl
 --
 
-SELECT pg_catalog.setval('public.users_user_id_seq', 9, true);
+SELECT pg_catalog.setval('public.users_user_id_seq', 12, true);
 
 
 --
@@ -318,6 +381,14 @@ ALTER TABLE ONLY public.users
 
 
 --
+-- Name: images images_users_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: tephl
+--
+
+ALTER TABLE ONLY public.images
+    ADD CONSTRAINT images_users_id_fkey FOREIGN KEY (submitted_by) REFERENCES public.users(user_id);
+
+
+--
 -- Name: users users_family_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: tephl
 --
 
@@ -345,5 +416,5 @@ ALTER TABLE ONLY public.users
 -- PostgreSQL database dump complete
 --
 
-\unrestrict XptlUNvbAw3JUkTLWa9YWkwAtUaM1AGFbINWdwdpVsa1zQh8asnVAD3rWb1lTF5
+\unrestrict q5r4WfykBBquSbcVzRr1r5FsWU5WGAE2kxxOb7oYeTcFjbwA9tai0EAJ5Eq6DoP
 
