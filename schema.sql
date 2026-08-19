@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict XptlUNvbAw3JUkTLWa9YWkwAtUaM1AGFbINWdwdpVsa1zQh8asnVAD3rWb1lTF5
+\restrict J85icEfSqFDOHmdpKfd6hHYTXpxAO8G1lONb0oFyPkigL8vFbPnTMr1IFr1NTrm
 
 -- Dumped from database version 17.10 (Debian 17.10-0+deb13u1)
 -- Dumped by pg_dump version 17.10 (Debian 17.10-0+deb13u1)
@@ -276,9 +276,6 @@ COPY public.family_members (family_member_id, family_id, user_id, relation, stat
 --
 
 COPY public.people (person_id, first_name, middle_name, last_name, gender, disabilities, age, city, barangay, street, address) FROM stdin;
-6	rhez	\N	astrera	male	\N	18	malolos	pinagbakahan	\N	lot 7
-7	rhez	\N	astrera	male	\N	18	malolos	pinagbakahan	\N	lot 7
-8	rhez	\N	lee	male	\N	18	malolos	pinagbakahan	\N	lot 7
 \.
 
 
@@ -297,7 +294,23 @@ COPY public.roles (role_id, name) FROM stdin;
 --
 
 COPY public.users (user_id, username, phone_number, created_at, archived_at, person_id, role_id, family_id, hashed_password) FROM stdin;
-6	tephL	090909	2026-08-18 10:45:56.00047+08	\N	8	100	\N	$2b$10$48KRv.GiCyNOZu/c3x5aUe0nqA/U4UzUxgZzlLOgv4DUAkwTadGpC
+6	tephL	090909	2026-08-17 22:45:56.00047-04	\N	\N	100	\N	$2b$10$48KRv.GiCyNOZu/c3x5aUe0nqA/U4UzUxgZzlLOgv4DUAkwTadGpC
+9	testuser	09171234567	2026-08-18 01:38:56.616648-04	\N	\N	100	3	$2b$10$WK6GqTA209MPPWbIVJC3PenLy8bmLk/KWu5IwEBt8iXrTNuvNnSM.
+10	newuser2	09181234567	2026-08-18 03:47:24.300473-04	\N	\N	100	1	$2b$10$vuirAue9xxnSVpzB1N4aV.RAGtYKnUtOD7fniL2W4btNv6UKiVOse
+11	mother_45	0917450	2026-08-19 00:49:22.090434-04	\N	\N	100	\N	$2b$10$Oc2VPcDyaqJhIpCJwS4yaeP9fQheaMuxSvWO9mgVlQFQ.4reCpdmO
+12	son_45	0918451	2026-08-19 00:49:22.933997-04	\N	\N	100	\N	$2b$10$UPUZbOxzUYExyi0EIJXcn.K/81jWxYJ8J1.tEWJwZIrMMxdTk5FKy
+13	mother_628	09176280	2026-08-19 01:05:51.031106-04	\N	\N	100	\N	$2b$10$QL3KHhin48So1AEN8fItGeeN/DS0GFwcP2gWI0yOBJkczSFhKexyu
+14	son_628	09186281	2026-08-19 01:05:51.735953-04	\N	\N	100	\N	$2b$10$Ib5ExQmyBXASDRpg2GuD/unPxBo1loK0YYNyMTUh.b4IE2DrCWnsm
+15	mother_28422	0917284220	2026-08-19 01:11:21.082703-04	\N	\N	100	\N	$2b$10$HhuKZXPPFicW9G9gbTQcReG8FEcyvcDJk7tqBpi/3o6Zn70uFZ7kK
+16	son_28422	0918284221	2026-08-19 01:11:21.806642-04	\N	\N	100	\N	$2b$10$XjKJ.lbjWuOOKD/YIf43QeK9VUqup.a7msUuhU3SsEyUhu1mulRYW
+17	mother_32331	0917323310	2026-08-19 01:36:07.628103-04	\N	\N	100	\N	$2b$10$dJ7MBQ5N2iCyJJG4p4XNb.zyEGOFXDqo2s5YzTWu541yE2k9Xv3EW
+18	son_32331	0918323311	2026-08-19 01:36:08.370882-04	\N	\N	100	\N	$2b$10$jh0YV8/xjuEo3K1ID0JLyOqKDOxMvHPM5cMRvWm/ce4O5XflUv5ua
+19	mother_23369	0917233690	2026-08-19 01:46:51.242344-04	\N	\N	100	\N	$2b$10$OMIrfSENJnj1BAtz3S38IeLSTNzQ9KboIcJ5kdW/HGFu6rAuPD5a6
+20	son_23369	0918233691	2026-08-19 01:46:51.976039-04	\N	\N	100	\N	$2b$10$8HxaG4GbQys3zpZO8p/gXusrKZltYIL12NbG1jdNMf8t.AjWumQs.
+21	mother_18055	0917180550	2026-08-19 02:40:27.765284-04	\N	\N	100	\N	$2b$10$9iOz4bvIBB.kIL19S67HKO/LT97ESwq6TUu/4VdSwEe5dJD0ZT9tK
+22	son_18055	0918180551	2026-08-19 02:40:31.242026-04	\N	\N	100	\N	$2b$10$iFbPHWsD4qyaUL6ElHGV0O6TXCp./Z32QKZLgDFvZZ/XAPMQOjBPe
+23	mother_20425	0917204250	2026-08-19 02:44:39.802499-04	\N	\N	100	\N	$2b$10$fMPgTCvtqbEAB9/Z6F.DmOQ.qWq.oVzqFgA03Xta0hjP5s79wxPTu
+24	son_20425	0918204251	2026-08-19 02:44:40.722408-04	\N	\N	100	\N	$2b$10$zL5BPrVu6rQ5BzxV0UiB0O2eZ8FNGbK477V6Db1uidqszOTNzjnMa
 \.
 
 
@@ -305,21 +318,21 @@ COPY public.users (user_id, username, phone_number, created_at, archived_at, per
 -- Name: family_family_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.family_family_id_seq', 6, true);
+SELECT pg_catalog.setval('public.family_family_id_seq', 10, true);
 
 
 --
 -- Name: family_members_family_member_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.family_members_family_member_id_seq', 6, true);
+SELECT pg_catalog.setval('public.family_members_family_member_id_seq', 14, true);
 
 
 --
 -- Name: people_person_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.people_person_id_seq', 8, true);
+SELECT pg_catalog.setval('public.people_person_id_seq', 1, false);
 
 
 --
@@ -333,7 +346,7 @@ SELECT pg_catalog.setval('public.roles_role_id_seq', 1, false);
 -- Name: users_user_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.users_user_id_seq', 9, true);
+SELECT pg_catalog.setval('public.users_user_id_seq', 24, true);
 
 
 --
@@ -459,5 +472,5 @@ ALTER TABLE ONLY public.users
 -- PostgreSQL database dump complete
 --
 
-\unrestrict XptlUNvbAw3JUkTLWa9YWkwAtUaM1AGFbINWdwdpVsa1zQh8asnVAD3rWb1lTF5
+\unrestrict J85icEfSqFDOHmdpKfd6hHYTXpxAO8G1lONb0oFyPkigL8vFbPnTMr1IFr1NTrm
 
