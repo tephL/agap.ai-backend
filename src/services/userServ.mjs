@@ -31,7 +31,12 @@ export async function getUserPersonalDetails(user_id){
         const text = "select user_id, u.phone_number, p.first_name, p.middle_name, p.last_name, p.gender, p.disabilities, p.age, p.city, p.barangay, p.street, p.address from users u left join people p on u.person_id = p.person_id where user_id = $1;";
         const values = [user_id];
         const details = await query(text, values);
-        return details.rows[0];
+        const noNull = Object.fromEntries(Object.entries(details.rows[0])
+            .filter(([key, value]) => {
+                return value !== null
+            })
+        );
+        return noNull;
     } catch(e){
         throw e;
     }
