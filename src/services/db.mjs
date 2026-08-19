@@ -1,7 +1,7 @@
 import { Pool } from "pg";
 import { DEV } from '#/config/env.mjs';
 
-const pool = new Pool({
+export const pool = new Pool({
     user: process.env.DB_USERNAME, 
     host: DEV ? 'localhost' : process.env.DB_HOST, 
     password: process.env.DB_PASSWORD, 
