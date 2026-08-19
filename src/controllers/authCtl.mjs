@@ -2,6 +2,7 @@ import * as userServ from '#/services/userServ.mjs';
 import { matchedData } from 'express-validator';
 import * as jwt from '#/services/jwtHelper.mjs';
 import { comparePassword } from '#/services/hasher.mjs';
+import { whoIsUser } from '#/middlewares/helper-mid.mjs';
 
 export async function createUser(req, res){
     try{
@@ -21,7 +22,9 @@ export async function createUser(req, res){
 
 export async function getProfile(req, res){
     try{
-        const user = await userServ.getUserWithProfile(user_id);
+        const { user_id } = whoIsUser(req);
+        const user = await userServ.getUserPersonalDetails(user_id);
+        return res.status(200).json(user);
     } catch(err){
         console.log(err);
         return res.sendStatus(500);
