@@ -11,10 +11,20 @@ router.post('/register',
     authCtl.createUser
 );
 
+router.get('/profile',
+    helperMid.isUserLoggedIn,
+    authCtl.getProfile
+);
+
 router.post('/login', 
     authMid.validateLogin,
     helperMid.catchValidationError,
     authCtl.login 
+);
+
+router.delete('/logout',
+    helperMid.isUserLoggedIn,
+    authCtl.logout
 );
 
 export default router;
