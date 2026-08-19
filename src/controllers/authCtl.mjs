@@ -7,7 +7,8 @@ import { whoIsUser } from '#/middlewares/helper-mid.mjs';
 export async function createUser(req, res){
     try{
         const { username, password, phone_number } = matchedData(req);
-        const user = await userServ.createUser({ username, password, phone_number });
+        const trimmed_phone_number = String(phone_number).replace(/^0/, '');;
+        const user = await userServ.createUser({ username, password, phone_number: trimmed_phone_number });
         return res.sendStatus(201);
     } catch(err){
         console.log(err);
@@ -34,7 +35,9 @@ export async function getProfile(req, res){
 export async function login(req, res){
     try{
         const { phone_number, password }  = matchedData(req);
-        const user = await userServ.getUserWithPhone(phone_number);
+        const trimmed_phone_number = String(phone_number).replace(/^0/, '');;
+        const user = await userServ.getUserWithPhone(trimmed_phone_number);
+        if(!user) return res.sendStatus(401);
         const isPassCorrect = comparePassword(password, user.hashed_password);
         if(!isPassCorrect) return res.sendStatus(401);
 
