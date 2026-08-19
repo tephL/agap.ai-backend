@@ -225,3 +225,48 @@ export async function inviteMember(req, res) {
         });
     }
 }
+
+export async function removeMember(req, res) {
+    try {
+        const { id: familyId, memberId } = req.params;
+
+        // FAMILY MANAGER / CREATOR ONLY
+        const isCreator = await familyService.isFamilyCreator(
+            familyId,
+            req.user.user_id
+        );
+
+        if (!isCreator) {
+            return res.status(403).json({
+                error: 'Only the family creator can remove members'
+            });
+        }
+
+        const removed = await familyService.removeMember(
+            familyId,
+            memberId,
+            req.user.user_id
+        );
+
+        if (!removed) {
+            return res.status(404).json({
+                error: 'Accepted member not found'
+            });
+        }
+
+        res.status(204).send();
+
+    } catch (err) {
+        if (err.code === 'CANNOT_REMOVE_CREATOR') {
+            return res.status(403).json({
+                error: err.message
+            });
+        }
+
+        console.error(err);
+
+        res.status(500).json({
+            error: 'Something went wrong'
+        });
+    }
+}

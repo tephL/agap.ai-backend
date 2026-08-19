@@ -35,3 +35,10 @@ export const inviteMemberValidator = [
     .notEmpty().withMessage('relation is required')
     .isLength({ max: 50 }).withMessage('relation must be 50 characters or fewer'),
 ];
+
+export const familyMemberIdParamValidator = [
+  ...familyIdParamValidator,
+  param('memberId')
+    .isInt({ min: 1 }).withMessage('memberId must be a positive integer')
+    .toInt(),
+];

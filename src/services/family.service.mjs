@@ -81,3 +81,24 @@ export async function deleteFamily(familyId) {
   return result.rows[0] ?? null;
 }
 
+export async function removeMember(familyId, memberId, requestingUserId) {
+  const memberRes = await query(
+    `SELECT * FROM family_members
+     WHERE family_member_id = $1 AND family_id = $2 AND status = 'accepted'`,
+    [memberId, familyId]
+  );
+  const member = memberRes.rows[0];
+  if (!member) return null;
+
+  if (member.user_id === requestingUserId) {
+    const err = new Error('The family creator cannot remove themselves. Delete the family instead.');
+    err.code = 'CANNOT_REMOVE_CREATOR';
+    throw err;
+  }
+
+  const result = await query(
+    `DELETE FROM family_members WHERE family_member_id = $1 RETURNING family_member_id`,
+    [memberId]
+  );
+  return result.rows[0] ?? null;
+}
