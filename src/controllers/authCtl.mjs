@@ -35,6 +35,7 @@ export async function login(req, res){
     try{
         const { phone_number, password }  = matchedData(req);
         const user = await userServ.getUserWithPhone(phone_number);
+        if(!user) return res.sendStatus(401);
         const isPassCorrect = comparePassword(password, user.hashed_password);
         if(!isPassCorrect) return res.sendStatus(401);
 
