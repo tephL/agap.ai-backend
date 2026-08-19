@@ -17,4 +17,9 @@ router.post('/login',
     authCtl.login 
 );
 
+router.delete('/logout',
+    helperMid.isUserLoggedIn,
+    authCtl.logout
+);
+
 export default router;

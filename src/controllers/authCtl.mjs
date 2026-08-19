@@ -48,3 +48,8 @@ export async function login(req, res){
         return res.sendStatus(500);
     }
 }
+
+export function logout(req, res){
+    res.clearCookie('token');
+    return res.sendStatus(204);
+}
