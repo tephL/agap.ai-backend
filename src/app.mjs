@@ -3,6 +3,7 @@ import { DEV } from '#/config/env.mjs'
 import authRoute from '#/routes/authRoutes.mjs';
 import peopleRoute from '#/routes/peopleRoutes.mjs';
 import familyRoutes from '#/routes/family.routes.mjs';
+import reportRoutes from '#/routes/reportRoutes.mjs';
 
 const PORT = DEV ? 3000 : process.env.PORT;
 
@@ -12,6 +13,7 @@ app.use(express.json());
 app.use('/api/auth', authRoute);
 app.use('/api/people', peopleRoute);
 app.use('/api/families', familyRoutes);
+app.use('/api/reports', reportRoutes);
 
 app.use((req, res) => res.sendStatus(404));
 
