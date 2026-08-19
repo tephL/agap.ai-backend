@@ -11,6 +11,11 @@ router.post('/register',
     authCtl.createUser
 );
 
+router.get('/profile',
+    helperMid.isUserLoggedIn,
+    authCtl.getProfile
+);
+
 router.post('/login', 
     authMid.validateLogin,
     helperMid.catchValidationError,

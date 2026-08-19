@@ -19,6 +19,15 @@ export async function createUser(req, res){
     }
 }
 
+export async function getProfile(req, res){
+    try{
+        const user = await userServ.getUserWithProfile(user_id);
+    } catch(err){
+        console.log(err);
+        return res.sendStatus(500);
+    }
+}
+
 export async function login(req, res){
     try{
         const { phone_number, password }  = matchedData(req);
