@@ -46,7 +46,15 @@ export async function getFamilyById(familyId) {
 
 export async function getFamilyMembers(familyId) {
   const result = await query(
-    `SELECT u.user_id, u.username, u.phone_number, p.first_name, p.last_name, p.age, fm.relation
+    `SELECT 
+        fm.family_member_id,
+        u.user_id, 
+        u.username, 
+        u.phone_number, 
+        p.first_name, 
+        p.last_name, 
+        p.age, 
+        fm.relation
      FROM family_members fm
      JOIN users u ON u.user_id = fm.user_id
      LEFT JOIN people p ON p.person_id = u.person_id
