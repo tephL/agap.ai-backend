@@ -73,6 +73,29 @@ export async function getFamilyById(req, res) {
     }
 }
 
+export async function getMyFamily(req, res) {
+    try {
+        const family = await familyService.getMyFamily(
+            req.user.user_id
+        );
+
+        if (!family) {
+            return res.status(404).json({
+                error: 'No family found for this account'
+            });
+        }
+
+        res.status(200).json(family);
+
+    } catch (err) {
+        console.error(err);
+
+        res.status(500).json({
+            error: 'Something went wrong'
+        });
+    }
+}
+
 export async function getFamilyMembers(req, res) {
     try {
         const family = await familyService.getFamilyById(
@@ -82,6 +105,18 @@ export async function getFamilyMembers(req, res) {
         if (!family) {
             return res.status(404).json({
                 error: 'Family not found'
+            });
+        }
+
+        // MEMBERS ONLY - the requester must belong to this family
+        const isMember = await familyService.isAcceptedMember(
+            req.params.id,
+            req.user.user_id
+        );
+
+        if (!isMember) {
+            return res.status(403).json({
+                error: 'You are not a member of this family'
             });
         }
 

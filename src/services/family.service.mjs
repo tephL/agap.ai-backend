@@ -44,6 +44,29 @@ export async function getFamilyById(familyId) {
   return result.rows[0] ?? null;
 }
 
+export async function getMyFamily(userId) {
+  const familyRes = await query(
+    `SELECT f.family_id, f.name, f.created_by
+     FROM family f
+     JOIN family_members fm ON fm.family_id = f.family_id
+     WHERE fm.user_id = $1 AND fm.status = 'accepted'
+     LIMIT 1`,
+    [userId]
+  );
+  const familyRow = familyRes.rows[0];
+  if (!familyRow) return null;
+
+  const members = await getFamilyMembers(familyRow.family_id);
+
+  return {
+    family_id: familyRow.family_id,
+    name: familyRow.name,
+    created_by: familyRow.created_by,
+    is_creator: familyRow.created_by === userId,
+    members,
+  };
+}
+
 export async function getFamilyMembers(familyId) {
   const result = await query(
     `SELECT 
