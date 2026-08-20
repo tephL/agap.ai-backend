@@ -58,6 +58,17 @@ export const validateNewPerson = [
         .withMessage('Address must be provided')
         .isLength({ max: 255 })
         .withMessage('Address must not exceed 255 characters'),
+    body('pets')
+        .optional({ checkFalsy: true })
+        .isArray()
+        .withMessage('Pets must be an array')
+        .custom((arr) => arr.every((item) => typeof item === 'string'))
+        .withMessage('Each pet must be a string'),
+    body('house_floors')
+        .optional()
+        .isInt({ min: 1, max: 10 })
+        .withMessage('House floors must be a valid number between 1 and 10')
+        .toInt(),
 ];
 
 export const validateUpdatePerson = [
@@ -125,4 +136,15 @@ export const validateUpdatePerson = [
         .withMessage('Address must be provided')
         .isLength({ max: 255 })
         .withMessage('Address must not exceed 255 characters'),
+    body('pets')
+        .optional({ checkFalsy: true })
+        .isArray()
+        .withMessage('Pets must be an array')
+        .custom((arr) => arr.every((item) => typeof item === 'string'))
+        .withMessage('Each pet must be a string'),
+    body('house_floors')
+        .optional()
+        .isInt({ min: 1, max: 10 })
+        .withMessage('House floors must be a valid number between 1 and 10')
+        .toInt(),
 ];
