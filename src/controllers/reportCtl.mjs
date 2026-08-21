@@ -1,6 +1,9 @@
 import { uploadImageToCloudinary } from "#/services/cloudinaryUploader.mjs";
 import * as imageServ from '#/services/imageServices.mjs';
 import * as helperMid from '#/middlewares/helper-mid.mjs';
+import { matchedData } from "express-validator";
+import { whoIsUser } from "#/middlewares/helper-mid.mjs";
+import * as reportServ from "#/services/reportServ.mjs";
 
 const MIN_FILES = 1;
 const MAX_FILES = 3;
@@ -27,5 +30,17 @@ export async function uploadReportedImage(req, res){
     } catch(e){
         console.log(e);
         return res.status(500).json({ message: 'Upload failed' });
+    }
+}
+
+export async function reportWithLocation(req, res){
+    try{
+        const { latitude, longitude } = matchedData(req);
+        const { user_id } = whoIsUser(req);
+        const report = await reportServ.logReportWithCoordinates({ latitude, longitude, user_id }); 
+        return res.sendStatus(200);
+    } catch(e){
+        console.log(e);
+        return res.sendStatus(500);
     }
 }
