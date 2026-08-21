@@ -1,13 +1,13 @@
 import { Router } from "express";
 import * as helperMid from '#/middlewares/helper-mid.mjs';
 import * as reportCtl from '#/controllers/reportCtl.mjs';
-import upload from "#/config/multer.mjs";
+import * as reportMid from '#/middlewares/reports-mid.mjs';
 
 const router = Router();
 router.use(helperMid.isUserLoggedIn);
 
 router.post('/upload', 
-    upload.single('image'),
+    reportMid.handleImageUploads, 
     reportCtl.uploadReportedImage
 );
 
