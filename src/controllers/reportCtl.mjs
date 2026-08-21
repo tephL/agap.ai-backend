@@ -4,6 +4,7 @@ import * as helperMid from '#/middlewares/helper-mid.mjs';
 import { matchedData } from "express-validator";
 import { whoIsUser } from "#/middlewares/helper-mid.mjs";
 import * as reportServ from "#/services/reportServ.mjs";
+import { checkReportInterval } from "#/services/reportServ.mjs";
 
 const MIN_FILES = 1;
 const MAX_FILES = 3;
@@ -18,6 +19,9 @@ export async function uploadReportedImage(req, res){
 
     try {
         const { user_id } = helperMid.whoIsUser(req);
+        const checkInterval = await checkReportInterval({ user_id });
+        console.log(checkInterval);
+        if(!checkInterval) return res.status(200).json({ message: "No reports to attach image to have been made in the past 5 minutes" });
 
         const uploadResults = await Promise.all(
             req.files.map(file => uploadImageToCloudinary(file.buffer))
