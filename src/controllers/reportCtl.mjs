@@ -7,7 +7,6 @@ export async function uploadReportedImage(req, res){
 
     try{
         const result = await uploadImageToCloudinary(req.file.buffer);
-        console.log(result);
         const { user_id } = helperMid.whoIsUser(req);
         const log = await imageServ.logImageUpload({ url: result.url, user_id: user_id});
         return res.sendStatus(200);
