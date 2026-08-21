@@ -44,9 +44,40 @@ export async function getFamilyById(familyId) {
   return result.rows[0] ?? null;
 }
 
+export async function getMyFamily(userId) {
+  const familyRes = await query(
+    `SELECT f.family_id, f.name, f.created_by
+     FROM family f
+     JOIN family_members fm ON fm.family_id = f.family_id
+     WHERE fm.user_id = $1 AND fm.status = 'accepted'
+     LIMIT 1`,
+    [userId]
+  );
+  const familyRow = familyRes.rows[0];
+  if (!familyRow) return null;
+
+  const members = await getFamilyMembers(familyRow.family_id);
+
+  return {
+    family_id: familyRow.family_id,
+    name: familyRow.name,
+    created_by: familyRow.created_by,
+    is_creator: familyRow.created_by === userId,
+    members,
+  };
+}
+
 export async function getFamilyMembers(familyId) {
   const result = await query(
-    `SELECT u.user_id, u.username, u.phone_number, p.first_name, p.last_name, p.age, fm.relation
+    `SELECT 
+        fm.family_member_id,
+        u.user_id, 
+        u.username, 
+        u.phone_number, 
+        p.first_name, 
+        p.last_name, 
+        p.age, 
+        fm.relation
      FROM family_members fm
      JOIN users u ON u.user_id = fm.user_id
      LEFT JOIN people p ON p.person_id = u.person_id
@@ -81,3 +112,24 @@ export async function deleteFamily(familyId) {
   return result.rows[0] ?? null;
 }
 
+export async function removeMember(familyId, memberId, requestingUserId) {
+  const memberRes = await query(
+    `SELECT * FROM family_members
+     WHERE family_member_id = $1 AND family_id = $2 AND status = 'accepted'`,
+    [memberId, familyId]
+  );
+  const member = memberRes.rows[0];
+  if (!member) return null;
+
+  if (member.user_id === requestingUserId) {
+    const err = new Error('The family creator cannot remove themselves. Delete the family instead.');
+    err.code = 'CANNOT_REMOVE_CREATOR';
+    throw err;
+  }
+
+  const result = await query(
+    `DELETE FROM family_members WHERE family_member_id = $1 RETURNING family_member_id`,
+    [memberId]
+  );
+  return result.rows[0] ?? null;
+}

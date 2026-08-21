@@ -2,7 +2,8 @@ import { query, withTransaction } from '#/services/db.mjs';
 import { getUserWithPhone } from '#/services/userServ.mjs';
 
 export async function inviteMember(familyId, phoneNumber, relation) {
-  const invitee = await getUserWithPhone(phoneNumber);
+  const trimmedPhoneNumber = String(phoneNumber).replace(/^0/, '');
+  const invitee = await getUserWithPhone(trimmedPhoneNumber);
   if (!invitee) {
     const err = new Error('No registered user found with that phone number');
     err.code = 'USER_NOT_FOUND';

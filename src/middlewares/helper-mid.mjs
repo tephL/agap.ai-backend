@@ -1,6 +1,21 @@
 import { validationResult } from "express-validator";
 import { verifyToken } from "#/services/jwtHelper.mjs";
 
+function extractToken(req) {
+    const rawHeader = req.headers.cookie;
+    if (rawHeader) {
+        const match = rawHeader.match(/token=([^;]+)/);
+        if (match) return match[1];
+    }
+
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+        return authHeader.slice(7);
+    }
+
+    return null;
+}
+
 export function catchValidationError(req, res, next) {
     const errors = validationResult(req);
 
@@ -13,20 +28,10 @@ export function catchValidationError(req, res, next) {
 
 export function isUserLoggedIn(req, res, next) {
     try {
-        const rawHeader = req.headers.cookie;
+        const token = extractToken(req);
+        if (!token) return res.sendStatus(401);
 
-        if (!rawHeader) {
-            return res.sendStatus(401);
-        }
-
-        const match = rawHeader.match(/token=([^;]+)/);
-
-        if (!match) {
-            return res.sendStatus(401);
-        }
-
-        const decoded = verifyToken(match[1]);
-
+        const decoded = verifyToken(token);
         req.user = decoded;
         next();
     } catch (err) {
@@ -35,14 +40,12 @@ export function isUserLoggedIn(req, res, next) {
 }
 
 export function whoIsUser(req) {
-    const rawHeader = req.headers.cookie;
+    const token = extractToken(req);
+    if (!token) return null;
 
-    // TODO: add a getter for expo clients
-    if (!rawHeader) return null;
-
-    const match = rawHeader.match(/token=([^;]+)/);
-
-    if (!match) return null;
-
-    return verifyToken(match[1]);
+    try {
+        return verifyToken(token);
+    } catch {
+        return null;
+    }
 }
