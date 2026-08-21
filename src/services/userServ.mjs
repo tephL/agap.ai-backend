@@ -9,6 +9,17 @@ export async function createUser({ username, password, phone_number }){
     return user;
 }
 
+export async function saveUserLocation({ latitude, longitude, user_id }){
+    try{
+        const text = 'UPDATE users SET latitude = $1, longitude = $2 WHERE user_id = $3;';
+        const values = [latitude, longitude, user_id];
+        const sql = await query(text, values);
+        return;
+    } catch(e){
+        throw e;
+    }
+}
+
 export async function getUserWithPhone(phone_number){
     const user = await query(
         "SELECT * from users WHERE phone_number = $1;",
