@@ -19,16 +19,15 @@ export async function uploadReportedImage(req, res){
 
     try {
         const { user_id } = helperMid.whoIsUser(req);
-        const checkInterval = await checkReportInterval({ user_id });
-        console.log(checkInterval);
-        if(!checkInterval) return res.status(200).json({ message: "No reports to attach image to have been made in the past 5 minutes" });
+        const { report_id } = await checkReportInterval({ user_id });
+        if(report_id == undefined) return res.status(200).json({ message: "No reports to attach image to have been made in the past 5 minutes" });
 
         const uploadResults = await Promise.all(
             req.files.map(file => uploadImageToCloudinary(file.buffer))
         );
 
         const urls = uploadResults.map(result => result.url);
-        await imageServ.logImageUploads({ urls, user_id });
+        await imageServ.logImageUploads({ urls, user_id, report_id });
 
         return res.sendStatus(200);
     } catch(e){

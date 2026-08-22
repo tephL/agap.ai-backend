@@ -19,7 +19,6 @@ export async function logImageUploads({ urls, user_id, report_id }) {
         `;
 
         const { rows } = await client.query(imagesText, values);
-        console.log(rows);
 
         const linkValues = [];
         const linkPlaceholders = rows.map(({ image_id }, i) => {
@@ -31,14 +30,11 @@ export async function logImageUploads({ urls, user_id, report_id }) {
             VALUES ${linkPlaceholders.join(', ')}
             RETURNING *;
         `;
-
-        console.log(linkText);
-        console.log(linkValues);
-
-        throw new Error();
+        
+        const linking_images_report = await client.query(linkText, linkValues);
         
         await client.query('COMMIT');
-        return result;
+        return linking_images_report.rows;
     } catch (e) {
         await client.query('ROLLBACK');
         throw e;

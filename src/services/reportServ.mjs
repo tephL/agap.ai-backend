@@ -16,16 +16,16 @@ export async function logReportWithCoordinates({ latitude, longitude, user_id })
 export async function checkReportInterval({ user_id }){
     try{
         const text = `
-            SELECT EXISTS (
-                SELECT 1
-                FROM reports
-                WHERE reported_by = $1
-                  AND created_at >= NOW() - INTERVAL '5 minutes'
-            ) AS has_recent_report;
+            SELECT report_id
+            FROM reports
+            WHERE reported_by = $1
+                AND created_at >= NOW() - INTERVAL '5 minutes'
+            ORDER BY created_at DESC
+            LIMIT 1;
         `;
         const values = [user_id];
         const check = await query(text, values);
-        return check.rows[0].has_recent_report;
+        return check.rows[0];
     } catch(e){
         throw e;
     }
