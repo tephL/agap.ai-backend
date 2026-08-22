@@ -19,6 +19,14 @@ export async function createFamily(req, res) {
     } catch (err) {
         console.error(err);
 
+        // Unique index one_accepted_family_per_user: creator already belongs
+        // to a family — a routine client mistake, not a server fault.
+        if (err && err.code === '23505') {
+            return res.status(409).json({
+                error: 'You are already part of a family'
+            });
+        }
+
         res.status(500).json({
             error: 'Something went wrong'
         });
