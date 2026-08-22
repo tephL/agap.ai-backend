@@ -6,15 +6,15 @@ import { whoIsUser } from '#/middlewares/helper-mid.mjs';
 
 export async function createUser(req, res){
     try{
-        const { username, password, phone_number } = matchedData(req);
+        const { password, phone_number } = matchedData(req);
         const trimmed_phone_number = String(phone_number).replace(/^0/, '');;
-        const user = await userServ.createUser({ username, password, phone_number: trimmed_phone_number });
+        const user = await userServ.createUser({ password, phone_number: trimmed_phone_number });
         return res.sendStatus(201);
     } catch(err){
         console.log(err);
         if(err.code == 23505){
             return res.status(400).json({
-                message: "Username already exists"
+                message: "Phone number already registered"
             });
         }
         return res.sendStatus(500);

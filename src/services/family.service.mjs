@@ -72,7 +72,6 @@ export async function getFamilyMembers(familyId) {
     `SELECT 
         fm.family_member_id,
         u.user_id, 
-        u.username, 
         u.phone_number, 
         p.first_name, 
         p.last_name, 
