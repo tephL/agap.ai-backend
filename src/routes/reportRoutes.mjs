@@ -1,14 +1,27 @@
 import { Router } from "express";
 import * as helperMid from '#/middlewares/helper-mid.mjs';
 import * as reportCtl from '#/controllers/reportCtl.mjs';
-import upload from "#/config/multer.mjs";
+import * as reportMid from '#/middlewares/reports-mid.mjs';
+import * as usersMid from '#/middlewares/users-validators.mjs';
 
 const router = Router();
 router.use(helperMid.isUserLoggedIn);
 
 router.post('/upload', 
-    upload.single('image'),
+    reportMid.handleImageUploads, 
     reportCtl.uploadReportedImage
+);
+
+router.post('/description',
+    reportMid.validateDescription, 
+    helperMid.catchValidationError,
+    reportCtl.attachDescriptionToReport
+);
+
+router.post('/location',
+    usersMid.locationValidator,
+    helperMid.catchValidationError,
+    reportCtl.reportWithLocation
 );
 
 export default router
