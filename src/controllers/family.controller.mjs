@@ -52,6 +52,19 @@ export async function getFamilies(req, res) {
 
 export async function getFamilyById(req, res) {
     try {
+        // MEMBERS ONLY - never trust the client-supplied :id as proof of
+        // membership; verify against req.user.user_id (from the verified JWT)
+        const isMember = await familyService.isAcceptedMember(
+            req.params.id,
+            req.user.user_id
+        );
+
+        if (!isMember) {
+            return res.status(403).json({
+                error: 'You are not a member of this family'
+            });
+        }
+
         const family = await familyService.getFamilyById(
             req.params.id
         );
