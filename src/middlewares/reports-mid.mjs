@@ -1,4 +1,5 @@
 import upload from "#/config/multer.mjs";
+import { body } from "express-validator";
 import multer from "multer";
 
 export function handleImageUploads(req, res, next){
@@ -14,3 +15,12 @@ export function handleImageUploads(req, res, next){
         next();
     });
 }
+
+export const validateDescription = [
+    body('description')
+        .notEmpty()
+        .withMessage("Description must be provided")
+        .isString()
+        .withMessage("Description must be a string")
+        .trim()
+];

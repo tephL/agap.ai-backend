@@ -51,3 +51,19 @@ export async function reportWithLocation(req, res){
         return res.sendStatus(500);
     }
 }
+
+export async function attachDescriptionToReport(req, res){
+    try{
+        const { description } = matchedData(req);
+        const { user_id } = helperMid.whoIsUser(req);
+        const intervalResult = await checkReportInterval({ user_id });
+        if(intervalResult == undefined) return res.status(200).json({ message: "No reports to attach description to have been made in the past 5 minutes" });
+
+        const { report_id } = intervalResult;
+        const attach = await reportServ.attachDescriptionToReport({ report_id, description });
+        return res.sendStatus(200);
+    } catch(e){
+        console.log(e);
+        return res.sendStatus(500);
+    }
+}

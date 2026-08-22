@@ -12,6 +12,12 @@ router.post('/upload',
     reportCtl.uploadReportedImage
 );
 
+router.post('/description',
+    reportMid.validateDescription, 
+    helperMid.catchValidationError,
+    reportCtl.attachDescriptionToReport
+);
+
 router.post('/location',
     usersMid.locationValidator,
     helperMid.catchValidationError,

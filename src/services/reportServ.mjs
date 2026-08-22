@@ -30,3 +30,14 @@ export async function checkReportInterval({ user_id }){
         throw e;
     }
 }
+
+export async function attachDescriptionToReport({ report_id, description }){
+    try{
+        const text = `UPDATE reports SET description = $2 WHERE report_id = $1;`;
+        const values = [report_id, description];
+        const q = await query(text, values);
+        return q;
+    } catch(e){
+        throw e;
+    }
+}
