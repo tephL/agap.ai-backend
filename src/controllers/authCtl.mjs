@@ -54,6 +54,7 @@ export async function login(req, res){
         });
 
         return res.status(200).json({
+            user_id: user.user_id, 
             message: "Login successful",
             token
         });
