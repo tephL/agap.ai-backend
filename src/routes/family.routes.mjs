@@ -13,6 +13,7 @@ import {
 const router = Router();
 
 router.post('/', isUserLoggedIn, createFamilyValidator, validate, familyController.createFamily);
+router.get('/location', isUserLoggedIn, familyController.getFamilyLocation);
 router.get('/', familyController.getFamilies);
 router.get('/mine', isUserLoggedIn, familyController.getMyFamily);
 router.get('/:id', familyIdParamValidator, validate, familyController.getFamilyById);

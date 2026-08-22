@@ -1,5 +1,8 @@
 import * as familyService from '#/services/family.service.mjs';
 import * as invitationService from '#/services/invitation.service.mjs';
+import * as helperMid from '#/middlewares/helper-mid.mjs';
+import { whoIsUser } from '../middlewares/helper-mid.mjs';
+import { getFamilyCoordinates } from '../services/family.service.mjs';
 
 export async function createFamily(req, res) {
     try {
@@ -70,6 +73,21 @@ export async function getFamilyById(req, res) {
         res.status(500).json({
             error: 'Something went wrong'
         });
+    }
+}
+
+export async function getFamilyLocation(req, res){
+    try{
+        const { user_id } = whoIsUser(req);
+        const familyId = await familyService.getFamilyId(user_id);
+        if(familyId.length === 0) return res.status(400).json({ message: "You dont have a family" });
+        
+        const { family_id } = familyId[0];
+        const coordinates = await familyService.getFamilyCoordinates({ user_id, family_id });
+        return res.status(200).json(coordinates);
+    } catch(e){
+        console.log(e);
+        return res.sendStatus(500);
     }
 }
 
