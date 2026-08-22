@@ -4,7 +4,6 @@ import * as helperMid from '#/middlewares/helper-mid.mjs';
 import { matchedData } from "express-validator";
 import { whoIsUser } from "#/middlewares/helper-mid.mjs";
 import * as reportServ from "#/services/reportServ.mjs";
-import { checkReportInterval } from "#/services/reportServ.mjs";
 
 const MIN_FILES = 1;
 const MAX_FILES = 3;
@@ -19,10 +18,12 @@ export async function uploadReportedImage(req, res){
 
     try {
         const { user_id } = helperMid.whoIsUser(req);
-        const intervalResult = await checkReportInterval({ user_id });
-        if(intervalResult == undefined) return res.status(200).json({ message: "No reports to attach image to have been made in the past 5 minutes" });
+        const recent_report = await reportServ.getUserRecentReport({ user_id });
+        console.log(recent_report);
+        if(recent_report.length === 0) return res.status(400).json({ message: "No report to attach image to" });
 
-        const { report_id } = intervalResult;
+        const { report_id } = recent_report[0];
+
         const isMaxImages = await imageServ.isMaxImagesProvided(report_id);
         if(isMaxImages) return res.status(400).json({ message: "You have sent your maximum images" });
 
@@ -56,10 +57,11 @@ export async function attachDescriptionToReport(req, res){
     try{
         const { description } = matchedData(req);
         const { user_id } = helperMid.whoIsUser(req);
-        const intervalResult = await checkReportInterval({ user_id });
-        if(intervalResult == undefined) return res.status(200).json({ message: "No reports to attach description to have been made in the past 5 minutes" });
+        const recent_report = await reportServ.getUserRecentReport({ user_id });
+        if(recent_report.length === 0) return res.status(400).json({ message: "No report to attach description to" });
 
-        const { report_id } = intervalResult;
+        const { report_id } = recent_report[0];
+
         const attach = await reportServ.attachDescriptionToReport({ report_id, description });
         return res.sendStatus(200);
     } catch(e){
