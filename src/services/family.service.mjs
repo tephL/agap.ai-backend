@@ -36,6 +36,48 @@ export async function getFamilies({ limit = 50, offset = 0 } = {}) {
   return result.rows;
 }
 
+export async function getFamilyCoordinates({ family_id, user_id }){
+    try{
+        const text = `
+            select 
+                u.user_id,
+                u.last_seen,
+                u.latitude,
+                u.longitude 
+            from family_members fm
+            left join users u
+                on u.user_id = fm.user_id
+            where fm.family_id = $1
+            and status = 'accepted'
+            and fm.user_id != $2;
+        `;
+        const values = [family_id, user_id];
+        const q = await query(text, values);
+        return q.rows;
+    } catch(e){
+        throw e;
+    }
+}
+
+export async function getFamilyId(user_id){
+    try{
+        const text = `
+        select 
+          fm.family_id
+        from family_members fm
+        left join users u
+          on fm.user_id = u.user_id
+        where u.user_id = $1 and
+        status = 'accepted'
+        `;
+        const values = [user_id];
+        const familyId = await query(text, values);
+        return familyId.rows;
+    } catch(e){
+        throw e;
+    }
+}
+
 export async function getFamilyById(familyId) {
   const result = await query(
     `SELECT ${FAMILY_COLUMNS} FROM family WHERE family_id = $1`,
