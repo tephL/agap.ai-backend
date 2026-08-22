@@ -19,8 +19,12 @@ export async function uploadReportedImage(req, res){
 
     try {
         const { user_id } = helperMid.whoIsUser(req);
-        const { report_id } = await checkReportInterval({ user_id });
-        if(report_id == undefined) return res.status(200).json({ message: "No reports to attach image to have been made in the past 5 minutes" });
+        const intervalResult = await checkReportInterval({ user_id });
+        if(intervalResult == undefined) return res.status(200).json({ message: "No reports to attach image to have been made in the past 5 minutes" });
+
+        const { report_id } = intervalResult;
+        const isMaxImages = await imageServ.isMaxImagesProvided(report_id);
+        if(isMaxImages) return res.status(400).json({ message: "You have sent your maximum images" });
 
         const uploadResults = await Promise.all(
             req.files.map(file => uploadImageToCloudinary(file.buffer))

@@ -1,4 +1,4 @@
-import { pool } from "#/services/db.mjs";
+import { pool, query } from "#/services/db.mjs";
 
 export async function logImageUploads({ urls, user_id, report_id }) {
     const client = await pool.connect(); 
@@ -40,5 +40,23 @@ export async function logImageUploads({ urls, user_id, report_id }) {
         throw e;
     } finally {
         client.release();
+    }
+}
+
+export async function isMaxImagesProvided(report_id){
+    try{
+        const text = `
+            SELECT r.report_id, r.created_at, ri.image_id
+            FROM reports r
+                LEFT JOIN report_images ri
+                ON r.report_id = ri.report_id 
+            WHERE r.report_id = $1
+            LIMIT 4;
+        `; 
+        const values = [report_id];
+        const q = await query(text, values);
+        return q.rows.length >= 3; 
+    } catch(e){
+        throw e;
     }
 }
