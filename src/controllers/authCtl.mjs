@@ -43,7 +43,8 @@ export async function login(req, res){
 
         const token = jwt.generateToken({
             username: user.username,
-            user_id: user.user_id
+            user_id: user.user_id, 
+            role_id: user.role_id 
         });
 
         res.cookie("token", token, {
