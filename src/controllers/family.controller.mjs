@@ -65,6 +65,18 @@ export async function getFamilyById(req, res) {
             });
         }
 
+        // MEMBERS ONLY - the requester must belong to this family
+        const isMember = await familyService.isAcceptedMember(
+            req.params.id,
+            req.user.user_id
+        );
+
+        if (!isMember) {
+            return res.status(403).json({
+                error: 'You are not a member of this family'
+            });
+        }
+
         res.status(200).json(family);
 
     } catch (err) {

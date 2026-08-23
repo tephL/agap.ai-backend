@@ -39,6 +39,12 @@ export function isUserLoggedIn(req, res, next) {
     }
 }
 
+// Dispatchers are users whose role_id is 911. Must run after isUserLoggedIn.
+export function isDispatcher(req, res, next) {
+    if (req.user?.role_id !== 911) return res.sendStatus(403);
+    next();
+}
+
 export function whoIsUser(req) {
     const token = extractToken(req);
     if (!token) return null;
