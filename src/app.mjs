@@ -6,6 +6,7 @@ import familyRoutes from '#/routes/family.routes.mjs';
 import invitationRoutes from '#/routes/invitationRoutes.mjs';
 import reportRoutes from '#/routes/reportRoutes.mjs';
 import userRoutes from '#/routes/userRoutes.mjs';
+import dispatcherRoutes from '#/routes/dispatcher.routes.mjs';
 
 import cors from '#/config/cors.mjs';
 
@@ -21,6 +22,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/families', familyRoutes);
 app.use('/api/invitations', invitationRoutes);
 app.use('/api/reports', reportRoutes);
+app.use('/api/dispatcher', dispatcherRoutes);
 
 app.use((req, res) => res.sendStatus(404));
 

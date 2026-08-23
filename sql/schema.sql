@@ -571,6 +571,103 @@ ALTER TABLE ONLY public.users
     REFERENCES public.roles(role_id)
     ON DELETE RESTRICT;
 
+
+-- ==================================================================
+-- Dispatcher teams / clusters / assignments
+-- Hand-appended to match sql/migrations/2026-08-23-dispatcher-teams.sql.
+-- These will fold into the pg_dump layout on the next full dump.
+-- ==================================================================
+
+CREATE TABLE public.team (
+    team_id integer NOT NULL,
+    name character varying(150) NOT NULL,
+    contact_number character varying(50),
+    location_text character varying(255),
+    latitude double precision,
+    longitude double precision,
+    status character varying(20) DEFAULT 'available'::character varying NOT NULL,
+    created_by integer,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT team_status_check CHECK (
+        ((status)::text = ANY ((ARRAY['available'::character varying, 'busy'::character varying, 'offline'::character varying])::text[]))
+    )
+);
+
+CREATE SEQUENCE public.team_team_id_seq
+    AS integer START WITH 1 INCREMENT BY 1 NO MINVALUE NO MAXVALUE CACHE 1;
+
+ALTER SEQUENCE public.team_team_id_seq OWNED BY public.team.team_id;
+
+ALTER TABLE ONLY public.team ALTER COLUMN team_id SET DEFAULT nextval('public.team_team_id_seq'::regclass);
+
+ALTER TABLE ONLY public.team
+    ADD CONSTRAINT team_pkey PRIMARY KEY (team_id);
+
+CREATE TABLE public.cluster (
+    cluster_id integer NOT NULL,
+    name character varying(150) NOT NULL,
+    latitude double precision,
+    longitude double precision,
+    priority character varying(20) DEFAULT 'medium'::character varying NOT NULL,
+    status character varying(20) DEFAULT 'open'::character varying NOT NULL,
+    report_count integer DEFAULT 0 NOT NULL,
+    people_affected integer DEFAULT 0 NOT NULL,
+    ai_summary text,
+    action_plan jsonb DEFAULT '[]'::jsonb NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT cluster_priority_check CHECK (
+        ((priority)::text = ANY ((ARRAY['high'::character varying, 'medium'::character varying, 'low'::character varying])::text[]))
+    ),
+    CONSTRAINT cluster_status_check CHECK (
+        ((status)::text = ANY ((ARRAY['open'::character varying, 'saved'::character varying, 'resolved'::character varying])::text[]))
+    )
+);
+
+CREATE SEQUENCE public.cluster_cluster_id_seq
+    AS integer START WITH 1 INCREMENT BY 1 NO MINVALUE NO MAXVALUE CACHE 1;
+
+ALTER SEQUENCE public.cluster_cluster_id_seq OWNED BY public.cluster.cluster_id;
+
+ALTER TABLE ONLY public.cluster ALTER COLUMN cluster_id SET DEFAULT nextval('public.cluster_cluster_id_seq'::regclass);
+
+ALTER TABLE ONLY public.cluster
+    ADD CONSTRAINT cluster_pkey PRIMARY KEY (cluster_id);
+
+CREATE TABLE public.assignment (
+    assignment_id integer NOT NULL,
+    team_id integer NOT NULL,
+    cluster_id integer NOT NULL,
+    status character varying(20) DEFAULT 'pending'::character varying NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT assignment_status_check CHECK (
+        ((status)::text = ANY ((ARRAY['pending'::character varying, 'dispatched'::character varying, 'resolved'::character varying])::text[]))
+    )
+);
+
+CREATE SEQUENCE public.assignment_assignment_id_seq
+    AS integer START WITH 1 INCREMENT BY 1 NO MINVALUE NO MAXVALUE CACHE 1;
+
+ALTER SEQUENCE public.assignment_assignment_id_seq OWNED BY public.assignment.assignment_id;
+
+ALTER TABLE ONLY public.assignment ALTER COLUMN assignment_id SET DEFAULT nextval('public.assignment_assignment_id_seq'::regclass);
+
+ALTER TABLE ONLY public.assignment
+    ADD CONSTRAINT assignment_pkey PRIMARY KEY (assignment_id);
+
+ALTER TABLE ONLY public.team
+    ADD CONSTRAINT team_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(user_id) ON DELETE SET NULL;
+
+ALTER TABLE ONLY public.assignment
+    ADD CONSTRAINT assignment_team_id_fkey FOREIGN KEY (team_id) REFERENCES public.team(team_id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.assignment
+    ADD CONSTRAINT assignment_cluster_id_fkey FOREIGN KEY (cluster_id) REFERENCES public.cluster(cluster_id) ON DELETE CASCADE;
+
+CREATE INDEX idx_assignment_team ON public.assignment USING btree (team_id);
+CREATE INDEX idx_assignment_cluster ON public.assignment USING btree (cluster_id);
+
 --
 -- PostgreSQL database dump complete
 --
