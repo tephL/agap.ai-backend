@@ -10,6 +10,7 @@ import clusterRoutes from '#/routes/clustersRoute.mjs';
 import dispatcherRoutes from '#/routes/dispatcher.routes.mjs';
 
 import cors from '#/config/cors.mjs';
+import { startClusterCleanupJob } from '#/jobs/clusterCleanupJob.mjs';
 
 const PORT = DEV ? 3000 : process.env.PORT;
 
@@ -31,4 +32,5 @@ app.use((req, res) => res.sendStatus(404));
 app.listen(PORT, () => {
 console.log(`running at port: ${PORT}`);
 console.log(DEV ? 'DEVELOPMENT mode' : 'PRODUCTION mode');
+startClusterCleanupJob();
 });
