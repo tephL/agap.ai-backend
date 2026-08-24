@@ -8,7 +8,7 @@ export async function getClustersFromCityOfDispatcher(user_id){
           c.cluster_id, 
           c.latitude, 
           c.longitude,
-          c.priority,
+          c.priority_level,
           c.status,
           c.report_count,
           c.people_affected,
