@@ -29,6 +29,22 @@ export async function getUserWithPhone(phone_number){
     return user.rows[0];
 }
 
+export async function getCityIdForUser(user_id) {
+  try {
+    const text = `
+      SELECT ci.city_id
+      FROM users u
+      LEFT JOIN people p ON p.person_id = u.person_id
+      LEFT JOIN cities ci ON LOWER(ci.name) = LOWER(p.city)
+      WHERE u.user_id = $1;
+    `;
+    const q = await query(text, [user_id]);
+    return q.rows[0]?.city_id ?? null;
+  } catch (e) {
+    throw e;
+  }
+}
+
 export async function getUserPersonalDetails(user_id){
     try{
         const text = "select user_id, u.phone_number, p.first_name, p.middle_name, p.last_name, p.gender, p.disabilities, p.age, p.city, p.barangay, p.street, p.address from users u left join people p on u.person_id = p.person_id where user_id = $1;";
