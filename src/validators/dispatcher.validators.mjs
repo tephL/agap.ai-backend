@@ -13,10 +13,6 @@ export const createTeamValidator = [
     .optional({ values: 'falsy' })
     .trim()
     .isLength({ max: 50 }).withMessage('contact_number must be 50 characters or fewer'),
-  body('location_text')
-    .optional({ values: 'falsy' })
-    .trim()
-    .isLength({ max: 255 }).withMessage('location_text must be 255 characters or fewer'),
   body('latitude')
     .optional({ values: 'falsy' })
     .isFloat({ min: -90, max: 90 }).withMessage('latitude must be between -90 and 90')
