@@ -50,6 +50,7 @@ export async function getReportsInCluster({ user_id, cluster_id }) {
           c.people_affected,
           c.ai_summary,
           c.action_plan,
+          ci.name AS city,
           c.created_at,
           c.updated_at
       FROM clusters c
