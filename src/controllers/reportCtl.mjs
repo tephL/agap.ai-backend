@@ -4,6 +4,7 @@ import * as helperMid from '#/middlewares/helper-mid.mjs';
 import { matchedData } from "express-validator";
 import { whoIsUser } from "#/middlewares/helper-mid.mjs";
 import * as reportServ from "#/services/reportServ.mjs";
+import * as clusterServ from '#/services/clusterServ.mjs';
 
 const MIN_FILES = 1;
 const MAX_FILES = 3;
@@ -46,6 +47,11 @@ export async function reportWithLocation(req, res){
         const { latitude, longitude } = matchedData(req);
         const { user_id } = whoIsUser(req);
         const report = await reportServ.logReportWithCoordinates({ latitude, longitude, user_id }); 
+        const { report_id } = report;
+
+        const { cluster_id } = await clusterServ.getNearestCluster({ latitude, longitude });
+        await clusterServ.assignReportToCluster({ report_id, cluster_id, reported_by: user_id });
+
         return res.sendStatus(200);
     } catch(e){
         console.log(e);

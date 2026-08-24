@@ -3,11 +3,11 @@ import * as userServ from '#/services/userServ.mjs';
 
 export async function logReportWithCoordinates({ latitude, longitude, user_id }){
     try{
-        const text = "INSERT INTO reports(latitude, longitude, reported_by) VALUES($1, $2, $3);";
+        const text = "INSERT INTO reports(latitude, longitude, reported_by) VALUES($1, $2, $3) RETURNING *;";
         const values = [latitude, longitude, user_id];
-        const report = query(text, values);
+        const report = await query(text, values);
         const logCurrLoc = await userServ.saveUserLocation({ latitude, longitude, user_id });
-        return;
+        return report.rows[0];
     } catch(e){
         throw e;
     }
