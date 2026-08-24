@@ -90,3 +90,20 @@ export async function attachDescriptionToReport(req, res){
         return res.sendStatus(500);
     }
 }
+
+export async function getReportById(req, res){
+    try{
+        const report_id = Number(req.params.reportId);
+        if(!Number.isInteger(report_id) || report_id <= 0){
+            return res.status(400).json({ message: "Invalid report id" });
+        }
+
+        const report = await reportServ.getReportDetailsById({ report_id });
+        if(!report) return res.status(404).json({ message: "Report not found" });
+
+        return res.status(200).json({ report });
+    } catch(e){
+        console.log(e);
+        return res.sendStatus(500);
+    }
+}

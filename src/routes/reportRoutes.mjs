@@ -24,4 +24,8 @@ router.post('/location',
     reportCtl.reportWithLocation
 );
 
+router.get('/:reportId',
+    reportCtl.getReportById
+);
+
 export default router
