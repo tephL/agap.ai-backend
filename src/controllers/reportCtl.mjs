@@ -5,6 +5,7 @@ import { matchedData } from "express-validator";
 import { whoIsUser } from "#/middlewares/helper-mid.mjs";
 import * as reportServ from "#/services/reportServ.mjs";
 import * as clusterServ from '#/services/clusterServ.mjs';
+import * as userServ from '#/services/userServ.mjs';
 
 const MIN_FILES = 1;
 const MAX_FILES = 3;
@@ -42,21 +43,35 @@ export async function uploadReportedImage(req, res){
     }
 }
 
-export async function reportWithLocation(req, res){
-    try{
-        const { latitude, longitude } = matchedData(req);
-        const { user_id } = whoIsUser(req);
-        const report = await reportServ.logReportWithCoordinates({ latitude, longitude, user_id }); 
-        const { report_id } = report;
+export async function reportWithLocation(req, res) {
+  try {
+    const { latitude, longitude } = matchedData(req);
+    const { user_id } = whoIsUser(req);
 
-        const { cluster_id } = await clusterServ.getNearestCluster({ latitude, longitude });
-        await clusterServ.assignReportToCluster({ report_id, cluster_id, reported_by: user_id });
+    const report = await reportServ.logReportWithCoordinates({ latitude, longitude, user_id });
+    const { report_id } = report;
 
-        return res.sendStatus(200);
-    } catch(e){
-        console.log(e);
-        return res.sendStatus(500);
+    let nearest = await clusterServ.getNearestCluster({ latitude, longitude });
+
+    if (!nearest) {
+      const city_id = await userServ.getCityIdForUser(user_id);
+      nearest = await clusterServ.createCluster({
+        latitude,
+        longitude,
+        city_id,
+        people_affected: report.people_affected ?? 0,
+      });
     }
+
+    const { cluster_id } = nearest;
+    await clusterServ.assignReportToCluster({ report_id, cluster_id, reported_by: user_id });
+    await clusterServ.updateClusterStats(cluster_id);
+
+    return res.sendStatus(200);
+  } catch (e) {
+    console.log(e);
+    return res.sendStatus(500);
+  }
 }
 
 export async function attachDescriptionToReport(req, res){
