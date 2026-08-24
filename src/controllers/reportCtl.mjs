@@ -66,6 +66,9 @@ export async function reportWithLocation(req, res) {
     const { cluster_id } = nearest;
     await clusterServ.assignReportToCluster({ report_id, cluster_id, reported_by: user_id });
     await clusterServ.updateClusterStats(cluster_id);
+    // moving the report may have emptied its previous cluster — sweep now
+    // instead of waiting for the periodic cleanup job
+    await clusterServ.deleteClustersWithoutReports();
 
     return res.sendStatus(200);
   } catch (e) {

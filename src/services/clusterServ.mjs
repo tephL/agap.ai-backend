@@ -218,6 +218,27 @@ export async function createCluster({ latitude, longitude, city_id, people_affec
   }
 }
 
+// Removes clusters that no longer have any reports attached. Safe to run
+// often: report_clusters and assignment cascade on delete, teams.assigned_to
+// is set null. Returns the deleted cluster ids.
+export async function deleteClustersWithoutReports(){
+  try{
+    const text = `
+      DELETE FROM clusters c
+      WHERE NOT EXISTS (
+        SELECT 1
+        FROM report_clusters rc
+        WHERE rc.cluster_id = c.cluster_id
+      )
+      RETURNING cluster_id;
+    `;
+    const q = await query(text);
+    return q.rows.map((row) => row.cluster_id);
+  } catch(e){
+    throw e;
+  }
+}
+
 export async function updateClusterStats(cluster_id) {
   try {
     const text = `
