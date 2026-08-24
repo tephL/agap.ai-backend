@@ -34,6 +34,92 @@ export async function getClustersFromCityOfDispatcher(user_id){
   }
 }
 
+// Returns { cluster, reports } for a cluster, but only if it belongs to the
+// dispatcher's city. Coordinates are cast to float8 so pg returns JS numbers
+// (numeric comes back as strings) ready for map rendering.
+export async function getReportsInCluster({ user_id, cluster_id }) {
+  try {
+    const ownedText = `
+      SELECT
+          c.cluster_id,
+          c.latitude::double precision AS latitude,
+          c.longitude::double precision AS longitude,
+          c.priority_level,
+          c.status,
+          c.report_count,
+          c.people_affected,
+          c.ai_summary,
+          c.action_plan,
+          c.created_at,
+          c.updated_at
+      FROM clusters c
+      JOIN users u
+          ON u.user_id = $1
+      LEFT JOIN people p
+          ON p.person_id = u.person_id
+      JOIN cities ci
+          ON ci.city_id = c.city_id
+         AND LOWER(ci.name) = LOWER(p.city)
+      WHERE c.cluster_id = $2;
+    `;
+    const owned = await query(ownedText, [user_id, cluster_id]);
+    const [cluster] = owned.rows;
+    if (!cluster) return null;
+
+    const text = `
+      SELECT
+          r.report_id,
+          r.latitude::double precision AS latitude,
+          r.longitude::double precision AS longitude,
+          r.description,
+          r.ai_summary,
+          r.status,
+          r.people_affected,
+          r.created_at,
+          ru.user_id AS reporter_user_id,
+          ru.username AS reporter_username,
+          rp.first_name AS reporter_first_name,
+          rp.last_name AS reporter_last_name,
+          COALESCE(
+            json_agg(i.public_url ORDER BY i.created_at)
+              FILTER (WHERE i.image_id IS NOT NULL),
+            '[]'::json
+          ) AS images
+      FROM reports r
+      JOIN report_clusters rc
+          ON rc.report_id = r.report_id
+      LEFT JOIN users ru
+          ON ru.user_id = r.reported_by
+      LEFT JOIN people rp
+          ON rp.person_id = ru.person_id
+      LEFT JOIN report_images ri
+          ON ri.report_id = r.report_id
+      LEFT JOIN images i
+          ON i.image_id = ri.image_id
+      WHERE rc.cluster_id = $1
+      GROUP BY r.report_id, ru.user_id, ru.username, rp.first_name, rp.last_name
+      ORDER BY r.created_at DESC;
+    `;
+    const q = await query(text, [cluster_id]);
+
+    const reports = q.rows.map((row) => {
+      const { reporter_user_id, reporter_username, reporter_first_name, reporter_last_name, ...report } = row;
+      return {
+        ...report,
+        reporter: reporter_user_id == null ? null : {
+          user_id: reporter_user_id,
+          username: reporter_username,
+          name: [reporter_first_name, reporter_last_name].filter(Boolean).join(' '),
+        },
+      };
+    });
+
+    return { cluster, reports };
+  } catch (e) {
+    throw e;
+  }
+}
+
 export async function assignReportToCluster({ report_id, cluster_id, reported_by }) {
   try {
     const existingReports = await reportOfUserFromCluster({ user_id: reported_by, cluster_id });
