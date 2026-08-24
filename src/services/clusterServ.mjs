@@ -5,6 +5,7 @@ export async function getClustersFromCityOfDispatcher(user_id){
     const text = `
       SELECT
           LOWER(p.city) AS city,
+          c.cluster_id, 
           c.latitude, 
           c.longitude,
           c.priority,
