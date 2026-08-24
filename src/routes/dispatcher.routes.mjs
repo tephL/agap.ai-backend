@@ -6,6 +6,7 @@ import {
   createTeamValidator,
   teamIdParamValidator,
   clusterIdParamValidator,
+  assignmentIdParamValidator,
   clusterStatusBodyValidator,
   assignmentStatusBodyValidator,
   createAssignmentValidator,
@@ -48,7 +49,7 @@ router.post(
 );
 router.patch(
   '/assignments/:id/status',
-  clusterIdParamValidator,
+  assignmentIdParamValidator,
   assignmentStatusBodyValidator,
   validate,
   dispatcherController.updateAssignmentStatus
