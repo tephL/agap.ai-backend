@@ -5,21 +5,37 @@ export async function analyzeReport({ report_id }) {
   try {
     const report = await fetchReportWithImages(report_id);
     if (!report) return null;
-    if (!report.images || report.images.length === 0) return null;
-
-    const imageBuffers = await fetchImageBuffers(report.images);
-    if (imageBuffers.length === 0) return null;
 
     const location = report.latitude && report.longitude
       ? { latitude: Number(report.latitude), longitude: Number(report.longitude) }
       : null;
 
-    const aiResult = await geminiServ.analyzeMultipleImages({
-      imageBuffers,
-      description: report.description || null,
-      location,
-      mimeTypes: imageBuffers.map(() => 'image/jpeg'),
-    });
+    const personDetails = await fetchReporterDetails(report.reported_by);
+
+    const hasImages = report.images && report.images.length > 0;
+    let aiResult;
+
+    if (hasImages) {
+      const imageBuffers = await fetchImageBuffers(report.images);
+      if (imageBuffers.length > 0) {
+        aiResult = await geminiServ.analyzeMultipleImages({
+          imageBuffers,
+          description: report.description || null,
+          location,
+          personDetails,
+          mimeTypes: imageBuffers.map(() => 'image/jpeg'),
+        });
+      }
+    }
+
+    if (!aiResult) {
+      if (!report.description && !personDetails) return null;
+      aiResult = await geminiServ.analyzeText({
+        description: report.description || null,
+        location,
+        personDetails,
+      });
+    }
 
     await writeReportAI({ report_id, aiResult });
 
@@ -58,6 +74,7 @@ export async function reevaluateCluster({ cluster_id }) {
 async function fetchReportWithImages(report_id) {
   const text = `
     SELECT r.report_id, r.latitude, r.longitude, r.description,
+           r.reported_by,
            r.ai_summary AS existing_summary
     FROM reports r
     WHERE r.report_id = $1;
@@ -77,6 +94,19 @@ async function fetchReportWithImages(report_id) {
   report.images = imgs.rows;
 
   return report;
+}
+
+async function fetchReporterDetails(user_id) {
+  if (!user_id) return null;
+  const text = `
+    SELECT p.age, p.gender, p.city, p.barangay,
+           p.disabilities, p.pets, p.house_floors
+    FROM users u
+    JOIN people p ON p.person_id = u.person_id
+    WHERE u.user_id = $1;
+  `;
+  const { rows } = await query(text, [user_id]);
+  return rows[0] || null;
 }
 
 async function fetchImageBuffers(images) {

@@ -10,10 +10,20 @@ const DISASTER_TYPES = [
 
 const SYSTEM_PROMPT = `You are a disaster response AI assistant for a Philippines-based emergency reporting system. Analyze emergency report data and return a JSON object with the specified fields. Be concise and accurate. Base your assessment on the visual evidence and any provided context.`;
 
-function buildPrompt({ description, location }) {
+function buildPrompt({ description, location, personDetails }) {
   let context = '';
   if (description) context += `\n- Description from reporter: "${description}"`;
   if (location) context += `\n- Location: lat ${location.latitude}, lng ${location.longitude}`;
+  if (personDetails) {
+    context += '\n- Reporter profile:';
+    if (personDetails.age != null) context += ` Age ${personDetails.age}`;
+    if (personDetails.gender) context += `, ${personDetails.gender}`;
+    if (personDetails.barangay) context += `, Barangay ${personDetails.barangay}`;
+    if (personDetails.city) context += `, ${personDetails.city}`;
+    if (personDetails.disabilities?.length) context += `, disabilities: ${personDetails.disabilities.join(', ')}`;
+    if (personDetails.pets?.length) context += `, has pets: ${personDetails.pets.join(', ')}`;
+    if (personDetails.house_floors) context += `, lives in ${personDetails.house_floors}-floor house`;
+  }
 
   return `${SYSTEM_PROMPT}
 
@@ -31,6 +41,8 @@ Severity guidelines:
 - high: significant danger, urgent response needed, property at risk
 - medium: concerning situation, response needed within hours
 - low: minor incident, monitoring sufficient
+
+Consider the reporter's profile when estimating severity and people at risk. Elderly, disabled individuals, pet owners, and ground-floor residents face higher risk in disasters.
 
 Context:${context || '\n- No additional context provided.'}`;
 }
@@ -100,21 +112,21 @@ function bufferToGenerativePart(buffer, mimeType = 'image/jpeg') {
   };
 }
 
-export async function analyzeImage({ imageBuffer, description, location, mimeType }) {
-  const prompt = buildPrompt({ description, location });
+export async function analyzeImage({ imageBuffer, description, location, mimeType, personDetails }) {
+  const prompt = buildPrompt({ description, location, personDetails });
   const imagePart = bufferToGenerativePart(imageBuffer, mimeType || 'image/jpeg');
   return callGemini(prompt, [imagePart]);
 }
 
-export async function analyzeMultipleImages({ imageBuffers, description, location, mimeTypes }) {
-  const prompt = buildPrompt({ description, location });
+export async function analyzeMultipleImages({ imageBuffers, description, location, mimeTypes, personDetails }) {
+  const prompt = buildPrompt({ description, location, personDetails });
   const imageParts = imageBuffers.map((buf, i) =>
     bufferToGenerativePart(buf, mimeTypes?.[i] || 'image/jpeg')
   );
   return callGemini(prompt, imageParts);
 }
 
-export async function analyzeText({ description, location }) {
-  const prompt = buildPrompt({ description, location });
+export async function analyzeText({ description, location, personDetails }) {
+  const prompt = buildPrompt({ description, location, personDetails });
   return callGemini(prompt, null);
 }
