@@ -6,6 +6,7 @@ import { whoIsUser } from "#/middlewares/helper-mid.mjs";
 import * as reportServ from "#/services/reportServ.mjs";
 import * as clusterServ from '#/services/clusterServ.mjs';
 import * as userServ from '#/services/userServ.mjs';
+import * as aiAnalysisServ from '#/services/aiAnalysisServ.mjs';
 
 const MIN_FILES = 1;
 const MAX_FILES = 3;
@@ -35,6 +36,10 @@ export async function uploadReportedImage(req, res){
 
         const urls = uploadResults.map(result => result.url);
         await imageServ.logImageUploads({ urls, user_id, report_id });
+
+        aiAnalysisServ.analyzeReport({ report_id }).catch(e =>
+            console.error(`Background AI analysis failed for report ${report_id}:`, e.message)
+        );
 
         return res.sendStatus(200);
     } catch(e){
