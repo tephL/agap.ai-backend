@@ -3,3 +3,5 @@ node_modules/
 .vscode
 test-family-httpie.sh
 test-family-manager.sh
+AGENTS.md 
+opencode.jsonc 
