@@ -15,6 +15,7 @@ const TEAM_SELECT = `
     SELECT t.team_id, t.name, t.contact_number,
            ci.name AS location_text,
            t.latitude AS lat, t.longitude AS lng,
+           t.assigned_to,
            CASE
                WHEN t.archived_at IS NOT NULL THEN 'offline'
                WHEN t.assigned_to IS NOT NULL THEN 'busy'
@@ -86,10 +87,10 @@ export async function getClusters({ status } = {}, city_id) {
     return result.rows;
 }
 
-// Resolving a cluster also closes out its active assignments and frees the
-// teams responding to it — otherwise they stay busy forever against a
-// resolved cluster. Runs in one transaction so teams/assignments can never
-// be observed half-released.
+// Resolving a cluster closes out its active assignments, frees the teams
+// responding to it, and removes the cluster entirely so it disappears from
+// every feed and map. Runs in one transaction so nothing can be observed
+// half-released.
 export async function setClusterStatus(cluster_id, status, city_id) {
     return withTransaction(async (client) => {
         const updated = await client.query(
@@ -122,6 +123,10 @@ export async function setClusterStatus(cluster_id, status, city_id) {
                        SELECT 1 FROM assignment a
                        WHERE a.team_id = t.team_id AND a.status <> 'resolved'
                    );`,
+                [cluster_id]
+            );
+            await client.query(
+                `DELETE FROM clusters WHERE cluster_id = $1;`,
                 [cluster_id]
             );
         }
@@ -279,7 +284,13 @@ export async function updateAssignmentStatus(assignment_id, status, city_id) {
             [assignment_id, status]
         );
 
-        if (status === "resolved") {
+        if (status !== "resolved") {
+            // pending/dispatched keep the team tied to its cluster.
+            await client.query(
+                `UPDATE teams SET assigned_to = $2 WHERE team_id = $1;`,
+                [team_id, cluster_id]
+            );
+        } else {
             const stillBusy = await client.query(
                 `SELECT 1 FROM assignment
                  WHERE team_id = $1 AND status <> 'resolved'
@@ -292,17 +303,32 @@ export async function updateAssignmentStatus(assignment_id, status, city_id) {
                     [team_id]
                 );
             }
-        } else {
-            // pending/dispatched keep the team tied to its cluster.
-            await client.query(
-                `UPDATE teams SET assigned_to = $2 WHERE team_id = $1;`,
-                [team_id, cluster_id]
-            );
         }
 
+        // Snapshot before cleanup: resolving deletes the cluster, but the
+        // response still needs its details.
         const full = await client.query(assignmentSelect("WHERE a.assignment_id = $1"), [
             updated.rows[0].assignment_id,
         ]);
+
+        if (status === "resolved") {
+            // Once a cluster is fully handled it leaves the board: with no
+            // team holding an active assignment on it, delete it (assignment
+            // and report links cascade; citizen reports themselves are kept).
+            const activeOnCluster = await client.query(
+                `SELECT 1 FROM assignment
+                 WHERE cluster_id = $1 AND status <> 'resolved'
+                 LIMIT 1;`,
+                [cluster_id]
+            );
+            if (activeOnCluster.rowCount === 0) {
+                await client.query(
+                    `DELETE FROM clusters WHERE cluster_id = $1;`,
+                    [cluster_id]
+                );
+            }
+        }
+
         return shapeAssignment(full.rows[0]);
     });
 }
