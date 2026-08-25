@@ -21,6 +21,8 @@ export async function createPersonalDetails({ user_id, ...details }){
     } catch(err){
         await client.query('ROLLBACK');
         throw err;
+    } finally {
+      client.release();
     }
 }
 
