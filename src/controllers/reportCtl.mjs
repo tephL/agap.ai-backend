@@ -92,6 +92,11 @@ export async function attachDescriptionToReport(req, res){
         const { report_id } = recent_report[0];
 
         const attach = await reportServ.attachDescriptionToReport({ report_id, description });
+
+        aiAnalysisServ.analyzeReport({ report_id }).catch(e =>
+            console.error(`Background AI analysis failed for report ${report_id}:`, e.message)
+        );
+
         return res.sendStatus(200);
     } catch(e){
         console.log(e);
