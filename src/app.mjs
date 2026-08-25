@@ -9,6 +9,7 @@ import reportRoutes from '#/routes/reportRoutes.mjs';
 import userRoutes from '#/routes/userRoutes.mjs';
 import clusterRoutes from '#/routes/clustersRoute.mjs';
 import dispatcherRoutes from '#/routes/dispatcher.routes.mjs';
+import myAssignmentsRoute from '#/routes/myAssignments.route.mjs';
 
 import cors from '#/config/cors.mjs';
 import { startClusterCleanupJob } from '#/jobs/clusterCleanupJob.mjs';
@@ -28,6 +29,7 @@ app.use('/api/invitations', invitationRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/dispatcher', dispatcherRoutes);
 app.use('/api/clusters', clusterRoutes);
+app.use('/api/my-assignments', myAssignmentsRoute);
 
 app.use((req, res) => res.sendStatus(404));
 
