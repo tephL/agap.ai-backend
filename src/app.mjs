@@ -1,6 +1,7 @@
 import express from 'express';
 import { DEV } from '#/config/env.mjs'
 import authRoute from '#/routes/authRoutes.mjs';
+import smsRoute from '#/routes/smsRoutes.mjs';
 import peopleRoute from '#/routes/peopleRoutes.mjs';
 import familyRoutes from '#/routes/family.routes.mjs';
 import invitationRoutes from '#/routes/invitationRoutes.mjs';
@@ -19,6 +20,7 @@ app.use(express.json());
 app.use(cors);
 
 app.use('/api/auth', authRoute);
+app.use('/api/sms', smsRoute);
 app.use('/api/people', peopleRoute);
 app.use('/api/users', userRoutes);
 app.use('/api/families', familyRoutes);
