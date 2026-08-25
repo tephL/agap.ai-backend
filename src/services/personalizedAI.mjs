@@ -8,15 +8,12 @@ const MODEL = 'gemini-3.5-flash-lite';
 const HISTORY_LIMIT = 20;
 
 async function buildPersonalContext(user_id) {
-    const user = await familyServ.getFamilyMembers(null).catch(() => null);
-
     let person = null;
     let familyMembers = null;
 
-    // Fetch person details via a direct query since we need user's own person_id
     const { query: dbQuery } = await import('#/services/db.mjs');
     const userRow = await dbQuery(
-        'SELECT person_id, family_id FROM users WHERE user_id = $1',
+        'SELECT person_id FROM users WHERE user_id = $1',
         [user_id]
     );
     const userData = userRow.rows[0];
@@ -25,8 +22,13 @@ async function buildPersonalContext(user_id) {
         person = await peopleServ.getPersonById(userData.person_id);
     }
 
-    if (userData?.family_id) {
-        familyMembers = await familyServ.getFamilyMembers(userData.family_id);
+    try {
+        const myFamily = await familyServ.getMyFamily(user_id);
+        if (myFamily?.members) {
+            familyMembers = myFamily.members;
+        }
+    } catch {
+        // User may not have a family
     }
 
     return { person, familyMembers };
@@ -73,7 +75,7 @@ export async function getSuggestions(user_id) {
     const { query: dbQuery } = await import('#/services/db.mjs');
 
     const userRow = await dbQuery(
-        'SELECT person_id, family_id FROM users WHERE user_id = $1',
+        'SELECT person_id FROM users WHERE user_id = $1',
         [user_id]
     );
     const userData = userRow.rows[0];
