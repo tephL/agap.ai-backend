@@ -9,12 +9,17 @@ export const pool = new Pool({
     password: process.env.DB_PASSWORD, 
     database: process.env.DB_NAME, 
     port: process.env.DB_PORT,
+    idleTimeoutMillis: 20000,
     ssl: isLocalHost ? false : { rejectUnauthorized: false }
 });
 
 export function query(text, values){
     return pool.query(text, values);
 }
+
+pool.on('error', (err) => {
+  console.error('pg pool idle client error:', err.message);
+});
 
 export async function withTransaction(fn) {
     const client = await pool.connect();
