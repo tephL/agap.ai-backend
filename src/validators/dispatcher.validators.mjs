@@ -1,6 +1,5 @@
 import { body, param, query } from 'express-validator';
 
-const TEAM_STATUSES = ['available', 'busy', 'offline'];
 const CLUSTER_STATUSES = ['open', 'saved', 'resolved'];
 const ASSIGNMENT_STATUSES = ['pending', 'dispatched', 'resolved'];
 
@@ -34,6 +33,8 @@ export const clusterIdParamValidator = [
     .isInt({ min: 1 }).withMessage('id must be a positive integer')
     .toInt(),
 ];
+
+export const assignmentIdParamValidator = clusterIdParamValidator;
 
 export const clusterStatusBodyValidator = [
   body('status')

@@ -15,6 +15,7 @@ const TEAM_SELECT = `
     SELECT t.team_id, t.name, t.contact_number,
            ci.name AS location_text,
            t.latitude AS lat, t.longitude AS lng,
+           t.assigned_to,
            CASE
                WHEN t.archived_at IS NOT NULL THEN 'offline'
                WHEN t.assigned_to IS NOT NULL THEN 'busy'
@@ -86,18 +87,52 @@ export async function getClusters({ status } = {}, city_id) {
     return result.rows;
 }
 
+// Resolving a cluster closes out its active assignments, frees the teams
+// responding to it, and removes the cluster entirely so it disappears from
+// every feed and map. Runs in one transaction so nothing can be observed
+// half-released.
 export async function setClusterStatus(cluster_id, status, city_id) {
-    const text = `
-        UPDATE clusters
-        SET status = $2, updated_at = now()
-        WHERE cluster_id = $1 AND city_id = $3
-        RETURNING cluster_id,
-                  CONCAT('Cluster #', cluster_id) AS name,
-                  latitude AS lat, longitude AS lng,
-                  priority_level AS priority,
-                  status, report_count, people_affected, ai_summary, action_plan;`;
-    const result = await query(text, [cluster_id, status, city_id]);
-    return result.rows[0] ?? null;
+    return withTransaction(async (client) => {
+        const updated = await client.query(
+            `UPDATE clusters
+             SET status = $2, updated_at = now()
+             WHERE cluster_id = $1 AND city_id = $3
+             RETURNING cluster_id,
+                       CONCAT('Cluster #', cluster_id) AS name,
+                       latitude AS lat, longitude AS lng,
+                       priority_level AS priority,
+                       status, report_count, people_affected, ai_summary, action_plan;`,
+            [cluster_id, status, city_id]
+        );
+        if (updated.rowCount === 0) return null;
+
+        if (status === "resolved") {
+            await client.query(
+                `UPDATE assignment
+                 SET status = 'resolved', updated_at = now()
+                 WHERE cluster_id = $1 AND status <> 'resolved';`,
+                [cluster_id]
+            );
+            // Release every team whose current pointer is this cluster and
+            // that has no other active assignment left.
+            await client.query(
+                `UPDATE teams t
+                 SET assigned_to = NULL
+                 WHERE t.assigned_to = $1
+                   AND NOT EXISTS (
+                       SELECT 1 FROM assignment a
+                       WHERE a.team_id = t.team_id AND a.status <> 'resolved'
+                   );`,
+                [cluster_id]
+            );
+            await client.query(
+                `DELETE FROM clusters WHERE cluster_id = $1;`,
+                [cluster_id]
+            );
+        }
+
+        return updated.rows[0];
+    });
 }
 
 // ------------------------------------------------------------------
@@ -169,7 +204,9 @@ export async function createAssignment({ team_id, cluster_id }, city_id) {
         }
 
         const cluster = await client.query(
-            `SELECT cluster_id FROM clusters WHERE cluster_id = $1 AND city_id = $2;`,
+            `SELECT cluster_id FROM clusters
+             WHERE cluster_id = $1 AND city_id = $2
+             FOR UPDATE;`,
             [cluster_id, city_id]
         );
         if (cluster.rowCount === 0) {
@@ -210,10 +247,15 @@ export async function createAssignment({ team_id, cluster_id }, city_id) {
     });
 }
 
+// Forward-only lifecycle: pending -> dispatched -> resolved. Regressions
+// (e.g. resolved -> dispatched) would resurrect old assignments and can
+// leave a team with two active ones, so they are rejected.
+const ASSIGNMENT_RANK = { pending: 0, dispatched: 1, resolved: 2 };
+
 export async function updateAssignmentStatus(assignment_id, status, city_id) {
     return withTransaction(async (client) => {
         const current = await client.query(
-            `SELECT a.assignment_id, a.team_id, a.cluster_id
+            `SELECT a.assignment_id, a.team_id, a.cluster_id, a.status
              FROM assignment a
              JOIN teams t ON t.team_id = a.team_id
              WHERE a.assignment_id = $1 AND t.city_id = $2
@@ -225,7 +267,15 @@ export async function updateAssignmentStatus(assignment_id, status, city_id) {
             err.statusCode = 404;
             throw err;
         }
-        const { team_id, cluster_id } = current.rows[0];
+        const { team_id, cluster_id, status: currentStatus } = current.rows[0];
+
+        if (ASSIGNMENT_RANK[status] <= ASSIGNMENT_RANK[currentStatus]) {
+            const err = new Error(
+                `Assignment is already ${currentStatus}; status can only move forward (pending → dispatched → resolved)`
+            );
+            err.statusCode = 409;
+            throw err;
+        }
 
         const updated = await client.query(
             `UPDATE assignment SET status = $2, updated_at = now()
@@ -234,7 +284,13 @@ export async function updateAssignmentStatus(assignment_id, status, city_id) {
             [assignment_id, status]
         );
 
-        if (status === "resolved") {
+        if (status !== "resolved") {
+            // pending/dispatched keep the team tied to its cluster.
+            await client.query(
+                `UPDATE teams SET assigned_to = $2 WHERE team_id = $1;`,
+                [team_id, cluster_id]
+            );
+        } else {
             const stillBusy = await client.query(
                 `SELECT 1 FROM assignment
                  WHERE team_id = $1 AND status <> 'resolved'
@@ -247,17 +303,32 @@ export async function updateAssignmentStatus(assignment_id, status, city_id) {
                     [team_id]
                 );
             }
-        } else {
-            // pending/dispatched keep the team tied to its cluster.
-            await client.query(
-                `UPDATE teams SET assigned_to = $2 WHERE team_id = $1;`,
-                [team_id, cluster_id]
-            );
         }
 
+        // Snapshot before cleanup: resolving deletes the cluster, but the
+        // response still needs its details.
         const full = await client.query(assignmentSelect("WHERE a.assignment_id = $1"), [
             updated.rows[0].assignment_id,
         ]);
+
+        if (status === "resolved") {
+            // Once a cluster is fully handled it leaves the board: with no
+            // team holding an active assignment on it, delete it (assignment
+            // and report links cascade; citizen reports themselves are kept).
+            const activeOnCluster = await client.query(
+                `SELECT 1 FROM assignment
+                 WHERE cluster_id = $1 AND status <> 'resolved'
+                 LIMIT 1;`,
+                [cluster_id]
+            );
+            if (activeOnCluster.rowCount === 0) {
+                await client.query(
+                    `DELETE FROM clusters WHERE cluster_id = $1;`,
+                    [cluster_id]
+                );
+            }
+        }
+
         return shapeAssignment(full.rows[0]);
     });
 }
