@@ -1,6 +1,6 @@
 import genAI from '#/config/gemini.mjs';
 
-const MODEL = 'gemini-2.0-flash';
+const MODEL = 'gemini-3.5-flash-lite';
 
 const SEVERITY_VALUES = ['critical', 'high', 'medium', 'low'];
 const DISASTER_TYPES = [
@@ -80,7 +80,10 @@ async function callGemini(prompt, imageParts) {
   if (imageParts) parts.push(...imageParts);
   parts.push({ text: prompt });
 
-  const result = await model.generateContent({ contents: [{ role: 'user', parts }] });
+  const result = await model.generateContent({
+    contents: [{ role: 'user', parts }],
+    generationConfig: { responseMimeType: 'application/json' },
+  });
   const response = await result.response;
   const text = response.text();
 
