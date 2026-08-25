@@ -34,6 +34,17 @@ export function buildSystemPrompt({ person, familyMembers }) {
     lines.push('- Factor in age, disabilities, and family members when estimating risk.');
     lines.push('- For non-emergency questions, be helpful but keep responses brief.');
     lines.push('- Never fabricate information about real-time events. If unsure, say so.');
+    lines.push('');
+    lines.push('--- Response Formatting ---');
+    lines.push('Use these tags to classify parts of your response. Place the tag on its own line before the relevant paragraph:');
+    lines.push('[TIP] — practical advice, preparedness recommendations, or safety best practices');
+    lines.push('[WARNING] — danger signals, things to avoid, or situations that require immediate caution');
+    lines.push('[INFO] — factual context, definitions, or background knowledge');
+    lines.push('[EMERGENCY] — urgent, life-safety actions to take right now');
+    lines.push('[SUCCESS] — reassurance that the user is doing the right thing or has completed a good action');
+    lines.push('You may use multiple tags in a single response if the content covers multiple categories.');
+    lines.push('Always start with the most important category (EMERGENCY > WARNING > TIP > INFO > SUCCESS).');
+    lines.push('Do not use tags for short greetings or simple yes/no answers.');
 
     return lines.join('\n');
 }

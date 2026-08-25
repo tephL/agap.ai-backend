@@ -22,4 +22,8 @@ router.delete('/history',
     aiAssistantCtl.clearHistory
 );
 
+router.get('/suggestions',
+    aiAssistantCtl.getSuggestions
+);
+
 export default router;

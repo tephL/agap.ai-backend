@@ -41,3 +41,14 @@ export async function clearHistory(req, res) {
         return res.status(500).json({ message: 'Failed to clear history' });
     }
 }
+
+export async function getSuggestions(req, res) {
+    try {
+        const { user_id } = whoIsUser(req);
+        const suggestions = await personalizedAI.getSuggestions(user_id);
+        return res.status(200).json({ suggestions });
+    } catch (e) {
+        console.error('AI suggestions error:', e.message);
+        return res.status(500).json({ message: 'Failed to fetch suggestions' });
+    }
+}
