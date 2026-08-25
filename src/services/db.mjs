@@ -10,6 +10,9 @@ export const pool = new Pool({
     database: process.env.DB_NAME, 
     port: process.env.DB_PORT,
     idleTimeoutMillis: 20000,
+    connectionTimeoutMillis: 5000,       
+    statement_timeout: 10000,             
+    idle_in_transaction_session_timeout: 10000,
     ssl: isLocalHost ? false : { rejectUnauthorized: false }
 });
 
