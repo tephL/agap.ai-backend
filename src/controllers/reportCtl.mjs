@@ -75,6 +75,10 @@ export async function reportWithLocation(req, res) {
     // instead of waiting for the periodic cleanup job
     await clusterServ.deleteClustersWithoutReports();
 
+    aiAnalysisServ.analyzeReport({ report_id }).catch(e =>
+        console.error(`Background AI analysis failed for report ${report_id}:`, e.message)
+    );
+
     return res.sendStatus(200);
   } catch (e) {
     console.log(e);
