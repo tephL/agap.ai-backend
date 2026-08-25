@@ -6,7 +6,6 @@ export async function getClustersFromCityOfDispatcher(user_id){
   try{
     const text = `
       SELECT
-          LOWER(p.city) AS city,
           c.cluster_id, 
           c.latitude, 
           c.longitude,
@@ -16,18 +15,10 @@ export async function getClustersFromCityOfDispatcher(user_id){
           c.people_affected,
           c.ai_summary,
           c.action_plan
-      FROM users u
-      LEFT JOIN people p
-          ON p.person_id = u.person_id
-      LEFT JOIN cities ci
-          ON LOWER(ci.name) = LOWER(p.city)
-      LEFT JOIN clusters c
-          ON c.city_id = ci.city_id
-      WHERE u.role_id = 911
-        AND u.user_id = $1;
+      FROM clusters c
+      WHERE c.city_id = 1;
     `;
-    const values = [user_id];
-    const q = await query(text, values);
+    const q = await query(text);
     return q.rows;
   } catch(e){
     throw e;
@@ -54,16 +45,11 @@ export async function getReportsInCluster({ user_id, cluster_id }) {
           c.created_at,
           c.updated_at
       FROM clusters c
-      JOIN users u
-          ON u.user_id = $1
-      LEFT JOIN people p
-          ON p.person_id = u.person_id
-      JOIN cities ci
-          ON ci.city_id = c.city_id
-         AND LOWER(ci.name) = LOWER(p.city)
-      WHERE c.cluster_id = $2;
+      JOIN cities ci ON ci.city_id = c.city_id
+      WHERE c.cluster_id = $1
+        AND c.city_id = 1;
     `;
-    const owned = await query(ownedText, [user_id, cluster_id]);
+    const owned = await query(ownedText, [cluster_id]);
     const [cluster] = owned.rows;
     if (!cluster) return null;
 
@@ -186,7 +172,7 @@ export async function getNearestCluster({ latitude, longitude }) {
           )
         ) AS distance_m
       FROM clusters
-      WHERE status = 'open'
+      WHERE status = 'open' AND city_id = 1
       ORDER BY distance_m ASC
       LIMIT 1;
     `;

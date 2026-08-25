@@ -30,19 +30,7 @@ export async function getUserWithPhone(phone_number){
 }
 
 export async function getCityIdForUser(user_id) {
-  try {
-    const text = `
-      SELECT ci.city_id
-      FROM users u
-      LEFT JOIN people p ON p.person_id = u.person_id
-      LEFT JOIN cities ci ON LOWER(ci.name) = LOWER(p.city)
-      WHERE u.user_id = $1;
-    `;
-    const q = await query(text, [user_id]);
-    return q.rows[0]?.city_id ?? null;
-  } catch (e) {
-    throw e;
-  }
+  return 1;
 }
 
 export async function getUserPersonalDetails(user_id){
