@@ -246,12 +246,17 @@ export async function updateClusterStats(cluster_id) {
       SET latitude = sub.avg_lat,
           longitude = sub.avg_lon,
           report_count = sub.cnt,
-          people_affected = sub.people_sum,
+          people_affected = GREATEST(sub.people_sum, sub.ai_people_sum),
           priority_level = CASE
+            WHEN sub.max_severity = 'critical' THEN 'high'
+            WHEN sub.max_severity = 'high' AND (sub.cnt >= 3 OR sub.ai_people_sum >= 20) THEN 'high'
+            WHEN sub.cnt >= 3 OR sub.ai_people_sum >= 8 THEN 'medium'
             WHEN sub.cnt >= 5 OR sub.people_sum >= 20 THEN 'high'
             WHEN sub.cnt >= 3 OR sub.people_sum >= 8 THEN 'medium'
             ELSE 'low'
           END,
+          ai_severity = sub.max_severity,
+          ai_analyzed_at = CASE WHEN sub.max_severity IS NOT NULL THEN now() ELSE c.ai_analyzed_at END,
           updated_at = now()
       FROM (
         SELECT
@@ -259,7 +264,9 @@ export async function updateClusterStats(cluster_id) {
           AVG(r.latitude) AS avg_lat,
           AVG(r.longitude) AS avg_lon,
           COUNT(*) AS cnt,
-          COALESCE(SUM(r.people_affected), 0) AS people_sum
+          COALESCE(SUM(r.people_affected), 0) AS people_sum,
+          MAX(r.ai_severity) AS max_severity,
+          COALESCE(SUM(r.ai_people_estimate), 0) AS ai_people_sum
         FROM report_clusters rc
         JOIN reports r ON r.report_id = rc.report_id
         WHERE rc.cluster_id = $1

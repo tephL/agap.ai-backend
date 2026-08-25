@@ -4,6 +4,7 @@ configDotenv();
 import * as userServ from '#/services/userServ.mjs';
 import * as reportServ from '#/services/reportServ.mjs';
 import * as clusterServ from '#/services/clusterServ.mjs';
+import * as aiAnalysisServ from '#/services/aiAnalysisServ.mjs';
 
 const router = Router();
 router.use(express.raw({ type: 'application/json' }));
@@ -52,6 +53,10 @@ router.post('',
       if(description){
         await reportServ.attachDescriptionToReport({ report_id, description });
       }
+
+      aiAnalysisServ.analyzeReport({ report_id }).catch(e =>
+        console.error(`Background AI analysis failed for report ${report_id}:`, e.message)
+      );
 
       console.log('success!');
       res.sendStatus(200);
