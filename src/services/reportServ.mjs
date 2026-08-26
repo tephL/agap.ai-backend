@@ -48,6 +48,7 @@ export async function getReportDetailsById({ report_id }){
                    r.created_at,
                    r.reported_by,
                    u.username AS reporter_username,
+                   u.phone_number AS reporter_phone,
                    p.first_name,
                    p.last_name,
                    p.age,
@@ -84,7 +85,7 @@ export async function getReportDetailsById({ report_id }){
 
         const row = report.rows[0];
         const {
-            reported_by, reporter_username, first_name, last_name,
+            reported_by, reporter_username, reporter_phone, first_name, last_name,
             age, gender, person_city, person_barangay, street, address, disabilities, pets,
             ...rest
         } = row;
@@ -94,6 +95,7 @@ export async function getReportDetailsById({ report_id }){
             reporter: reported_by == null ? null : {
                 user_id: reported_by,
                 username: reporter_username,
+                phone_number: reporter_phone,
                 name: [first_name, last_name].filter(Boolean).join(' '),
                 age,
                 gender,
