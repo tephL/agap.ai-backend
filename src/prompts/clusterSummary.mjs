@@ -1,4 +1,4 @@
-const CLUSTER_SYSTEM_PROMPT = `You are a disaster response AI assistant for a Philippines-based emergency reporting system. You analyze aggregated emergency report data for a cluster of incidents and provide a strategic overview for dispatchers and response coordinators. Be concise, actionable, and focus on the bigger picture.`;
+const CLUSTER_SYSTEM_PROMPT = `Ikaw ay isang AI na tumutugon sa mga kaganapang pang-emergency para sa isang disaster reporting system sa Pilipinas. Sinusuri mo ang pinagsama-samang datos ng mga ulat ng emerhensya para sa isang cluster ng mga insidente at nagbibigay ng estratehikong pangkalahatang-ideya para sa mga dispatcher at coordinator ng tugon. Maging maikli, nangangahulugan, at nakatuon sa mas malaking larawan. LAGING tumugon sa Filipino.`;
 
 const SEVERITY_VALUES = ['critical', 'high', 'medium', 'low'];
 const DISASTER_TYPES = [
@@ -25,33 +25,34 @@ export function buildClusterPrompt({ reports, totalPeople, reportCount }) {
 
   return `${CLUSTER_SYSTEM_PROMPT}
 
-You are given aggregated data from ${reportCount} emergency report(s) in a single cluster. Synthesize them into a SINGLE cohesive cluster-level summary and action plan.
+Binibigyan ka ng datos mula sa ${reportCount} ulat ng emerhensya sa iisang cluster. Pagsamahin ang mga ito sa iisang magkakaugnay na buod ng cluster at plano ng aksyon.
 
-Individual reports:
-${reportSummaries || '  No individual report summaries available.'}
+Mga indibidwal na ulat:
+${reportSummaries || '  Walang available na buod ng indibidwal na ulat.'}
 
-Cluster statistics:
-- Total reports: ${reportCount}
-- Total people affected: ${totalPeople}
-- Severity breakdown: ${JSON.stringify(severityBreakdown)}
-- Disaster type breakdown: ${JSON.stringify(disasterBreakdown)}
+Estadistika ng cluster:
+- Kabuuang ulat: ${reportCount}
+- Kabuuang taong apektado: ${totalPeople}
+- Pagkakabaha-bahagi ng severity: ${JSON.stringify(severityBreakdown)}
+- Pagkakabaha-bahagi ng uri ng kalamidad: ${JSON.stringify(disasterBreakdown)}
 
-Return ONLY a valid JSON object (no markdown, no backticks) with these fields:
+Ibalik LANG ang valid na JSON object (walang markdown, walang backticks) na may mga field na ito:
 {
-  "ai_summary": "2-3 sentence strategic overview of the cluster situation, highlighting the overall scope, dominant disaster type, severity trend, and key concerns for dispatchers",
-  "ai_disaster_type": "One of: ${DISASTER_TYPES.join(', ')}",
-  "ai_severity": "One of: ${SEVERITY_VALUES.join(', ')}",
-  "ai_action_plan": ["action 1", "action 2", "action 3"]
+  "ai_summary": "2-3 pangungusap na estratehikong pangkalahatang-ideya ng sitwasyon ng cluster, na naghahighlight sa pangkalahatang sakop, nangingibabaw na uri ng kalamidad, takbo ng severity, at mga pangunahing pakikipag-ugnayan para sa mga dispatcher, sa Filipino",
+  "ai_disaster_type": "Isa sa mga: ${DISASTER_TYPES.join(', ')}",
+  "ai_severity": "Isa sa mga: ${SEVERITY_VALUES.join(', ')}",
+  "ai_action_plan": ["aksyon 1", "aksyon 2", "aksyon 3"]
 }
 
-Guidelines:
-- The summary should give dispatchers a quick understanding of the overall situation across all reports
-- Identify patterns: are reports clustered around the same type? escalating severity?
-- The severity should reflect the overall cluster risk (use the highest severity from individual reports as a baseline, but consider compounding factors)
-- The disaster type should be the dominant type across reports
-- Action plan should focus on cluster-level response coordination, not individual report actions
-- Consider compounding risks: multiple reports in the same area may indicate spreading disaster
-- Keep the summary concise but informative for decision-makers`;
+Mga alituntunin:
+- Ang buod ay dapat magbigay sa mga dispatcher ng mabilis na pag-unawa sa pangkalahatang sitwasyon sa lahat ng ulat
+- Tukuyin ang mga pattern: pareho bang uri ng kalamidad ang mga ulat? lumalala ba ang severity?
+- Ang severity ay dapat sumalamin sa pangkalahatang panganib ng cluster (gamitin ang pinakamataas na severity mula sa mga indibidwal na ulat bilang baseline, ngunit isaalang-alang ang mga kababalagang nagpapalala)
+- Ang uri ng kalamidad ay dapat ang pinakanangingibabaw na uri sa lahat ng ulat
+- Ang plano ng aksyon ay dapat nakatuon sa koordinasyon ng tugon sa antas ng cluster, hindi sa mga aksyon ng indibidwal na ulat
+- Isaalang-alang ang mga kababalagang nagpapalala: maraming ulat sa iisang lugar ay maaaring nagpapahiwatig ng kumakalat na kalamidad
+- Panatilihing maikli ngunit may sapat na impormasyon para sa mga nagdedesisyon
+- Lahat ng teksto ay dapat nasa Filipino`;
 }
 
 export function validateClusterResult(data) {

@@ -167,7 +167,8 @@ async function fetchReportsForCluster(cluster_id) {
     FROM report_clusters rc
     JOIN reports r ON r.report_id = rc.report_id
     WHERE rc.cluster_id = $1
-      AND r.ai_analyzed_at IS NOT NULL;
+      AND r.ai_analyzed_at IS NOT NULL
+      AND r.status != 'resolved';
   `;
   const { rows } = await query(text, [cluster_id]);
   return rows;
