@@ -1,4 +1,5 @@
 import genAI from '#/config/gemini.mjs';
+import { buildClusterPrompt, validateClusterResult } from '#/prompts/clusterSummary.mjs';
 
 const MODEL = 'gemini-3.5-flash-lite';
 
@@ -129,4 +130,27 @@ export async function analyzeMultipleImages({ imageBuffers, description, locatio
 export async function analyzeText({ description, location, personDetails }) {
   const prompt = buildPrompt({ description, location, personDetails });
   return callGemini(prompt, null);
+}
+
+// ------------------------------------------------------------------
+// Cluster-level analysis
+// ------------------------------------------------------------------
+
+async function callClusterGemini(prompt) {
+  const model = genAI.getGenerativeModel({ model: MODEL });
+
+  const result = await model.generateContent({
+    contents: [{ role: 'user', parts: [{ text: prompt }] }],
+    generationConfig: { responseMimeType: 'application/json' },
+  });
+  const response = await result.response;
+  const text = response.text();
+
+  const parsed = parseJsonFromResponse(text);
+  return validateClusterResult(parsed);
+}
+
+export async function analyzeCluster({ reports, totalPeople, reportCount }) {
+  const prompt = buildClusterPrompt({ reports, totalPeople, reportCount });
+  return callClusterGemini(prompt);
 }

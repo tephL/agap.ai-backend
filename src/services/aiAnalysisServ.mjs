@@ -56,7 +56,28 @@ export async function reevaluateCluster({ cluster_id }) {
     const reports = await fetchReportsForCluster(cluster_id);
     if (!reports.length) return null;
 
-    const summary = aggregateReports(reports);
+    const stats = computeClusterStats(reports);
+
+    let aiResult;
+    try {
+      aiResult = await geminiServ.analyzeCluster({
+        reports,
+        totalPeople: stats.people_affected,
+        reportCount: reports.length,
+      });
+    } catch (e) {
+      console.error(`Gemini cluster analysis failed for cluster ${cluster_id}, using fallback:`, e.message);
+      aiResult = null;
+    }
+
+    const summary = {
+      ai_summary: aiResult?.ai_summary || stats.mergedSummaries,
+      ai_severity: aiResult?.ai_severity || stats.maxSeverity,
+      ai_disaster_type: aiResult?.ai_disaster_type || stats.dominantType,
+      priority_level: stats.priority,
+      people_affected: stats.people_affected,
+      action_plan: aiResult?.ai_action_plan || stats.actionPlan,
+    };
 
     await writeClusterAI({ cluster_id, summary });
 
@@ -158,7 +179,7 @@ async function fetchReportsForCluster(cluster_id) {
 
 const SEVERITY_RANK = { critical: 4, high: 3, medium: 2, low: 1 };
 
-function aggregateReports(reports) {
+function computeClusterStats(reports) {
   let totalPeople = 0;
   let maxSeverity = 'low';
   const disasterCounts = {};
@@ -193,12 +214,12 @@ function aggregateReports(reports) {
     : `${summaries[0]} ... and ${summaries.length - 1} more reports.`;
 
   return {
-    ai_summary: mergedSummaries,
-    ai_severity: maxSeverity,
-    ai_disaster_type: dominantType,
-    priority_level: priority,
+    maxSeverity,
+    dominantType,
+    priority,
     people_affected: totalPeople,
-    action_plan: [...actionPlanSet].slice(0, 10),
+    actionPlan: [...actionPlanSet].slice(0, 10),
+    mergedSummaries,
   };
 }
 
