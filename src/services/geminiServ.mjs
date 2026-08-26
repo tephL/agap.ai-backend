@@ -9,43 +9,79 @@ const DISASTER_TYPES = [
   'storm_surge', 'collapse', 'other',
 ];
 
-const SYSTEM_PROMPT = `You are a disaster response AI assistant for a Philippines-based emergency reporting system. Analyze emergency report data and return a JSON object with the specified fields. Be concise and accurate. Base your assessment on the visual evidence and any provided context.`;
+const SYSTEM_PROMPT = `Ikaw ay isang AI na tumutugon sa mga kaganapang pang-emergency para sa isang disaster reporting system sa Pilipinas. Wastong suriin ang datos ng ulat at magbigay ng JSON na tugon. Tiyakin na ang bawat detalye ay may kinalaman sa emerhensya o kalamidad. Huwag magbigay ng impormasyon na wala sa paksa.`;
 
-function buildPrompt({ description, location, personDetails }) {
+function buildBaselinePrompt({ location, personDetails }) {
   let context = '';
-  if (description) context += `\n- Description from reporter: "${description}"`;
-  if (location) context += `\n- Location: lat ${location.latitude}, lng ${location.longitude}`;
+  if (location) context += `\n- Lokasyon: lat ${location.latitude}, lng ${location.longitude}`;
   if (personDetails) {
-    context += '\n- Reporter profile:';
-    if (personDetails.age != null) context += ` Age ${personDetails.age}`;
-    if (personDetails.gender) context += `, ${personDetails.gender}`;
-    if (personDetails.barangay) context += `, Barangay ${personDetails.barangay}`;
-    if (personDetails.city) context += `, ${personDetails.city}`;
-    if (personDetails.disabilities?.length) context += `, disabilities: ${personDetails.disabilities.join(', ')}`;
-    if (personDetails.pets?.length) context += `, has pets: ${personDetails.pets.join(', ')}`;
-    if (personDetails.house_floors) context += `, lives in ${personDetails.house_floors}-floor house`;
+    context += '\n- Detalye ng gumagamit:';
+    if (personDetails.first_name) context += ` Pangalan: ${personDetails.first_name}`;
+    if (personDetails.age != null) context += `, Edad: ${personDetails.age}`;
+    if (personDetails.gender) context += `, Kasarian: ${personDetails.gender}`;
+    if (personDetails.barangay) context += `, Barangay: ${personDetails.barangay}`;
+    if (personDetails.city) context += `, Lungsod: ${personDetails.city}`;
+    if (personDetails.disabilities?.length) context += `, Kapansanan: ${personDetails.disabilities.join(', ')}`;
+    if (personDetails.pets?.length) context += `, Alagang hayop: ${personDetails.pets.join(', ')}`;
+    if (personDetails.house_floors) context += `, Naninirahan sa ${personDetails.house_floors}-palapag na bahay`;
   }
 
   return `${SYSTEM_PROMPT}
 
-Analyze this emergency report and return ONLY a valid JSON object (no markdown, no backticks) with these fields:
+Suriin ang profile ng gumagamit at ang kanyang lokasyon upang lumikha ng baseline na panganib na pagtatasa para sa mga kalamidad. I-return LANG ang valid na JSON object (walang markdown, walang backticks) na may mga field na ito:
 {
-  "ai_summary": "Brief 1-2 sentence summary of the situation",
-  "ai_disaster_type": "One of: ${DISASTER_TYPES.join(', ')}",
-  "ai_severity": "One of: ${SEVERITY_VALUES.join(', ')}",
-  "ai_people_estimate": <integer, estimated number of people affected based on what you see>,
-  "ai_action_plan": ["action 1", "action 2", "action 3"]
+  "risk_level": "critical", "high", "medium", o "low",
+  "vulnerability_factors": ["factor 1", "factor 2"],
+  "recommended_actions": ["action 1", "action 2", "action 3"],
+  "summary": "Maikling buod ng panganib at rekomendasyon para sa gumagamit, isang paragraph lang"
 }
 
-Severity guidelines:
-- critical: immediate life threat, active rescue needed, people trapped or in danger
-- high: significant danger, urgent response needed, property at risk
-- medium: concerning situation, response needed within hours
-- low: minor incident, monitoring sufficient
+Mga alituntunin:
+- Tanging ang mga kadahilanang may kinalaman sa panganib at kalamidad lang ang isama (edad, kapansanan, lokasyon, uri ng bahay, alagang hayop)
+- Ang mga recommended_actions ay dapat nakatuon sa paghahanda at kaligtasan ng panganib
+- Huwag magbigay ng impormasyong walang kinalaman sa emerhensya o kalamidad
+- Isalin ang lahat ng teksto sa Filipino
 
-Consider the reporter's profile when estimating severity and people at risk. Elderly, disabled individuals, pet owners, and ground-floor residents face higher risk in disasters.
+Konteksto:${context || '\n- Walang karagdagang konteksto.'}`;
+}
 
-Context:${context || '\n- No additional context provided.'}`;
+function buildPrompt({ description, location, personDetails }) {
+  let context = '';
+  if (description) context += `\n- Paglalarawan mula sa nag-ulat: "${description}"`;
+  if (location) context += `\n- Lokasyon: lat ${location.latitude}, lng ${location.longitude}`;
+  if (personDetails) {
+    context += '\n- Profile ng nag-ulat:';
+    if (personDetails.age != null) context += ` Edad ${personDetails.age}`;
+    if (personDetails.gender) context += `, ${personDetails.gender}`;
+    if (personDetails.barangay) context += `, Barangay ${personDetails.barangay}`;
+    if (personDetails.city) context += `, ${personDetails.city}`;
+    if (personDetails.disabilities?.length) context += `, kapansanan: ${personDetails.disabilities.join(', ')}`;
+    if (personDetails.pets?.length) context += `, may alagang hayop: ${personDetails.pets.join(', ')}`;
+    if (personDetails.house_floors) context += `, naninirahan sa ${personDetails.house_floors}-palapag na bahay`;
+  }
+
+  return `${SYSTEM_PROMPT}
+
+Suriin ang ulat na ito ng emerhensya at ibalik LANG ang valid na JSON object (walang markdown, walang backticks) na may mga field na ito:
+{
+  "ai_summary": "Maikling buod ng sitwasyon sa 1-2 pangungusap, sa Filipino",
+  "ai_disaster_type": "Isa sa mga: ${DISASTER_TYPES.join(', ')}",
+  "ai_severity": "Isa sa mga: ${SEVERITY_VALUES.join(', ')}",
+  "ai_people_estimate": <integer, tinatayang bilang ng mga taong apektado batay sa nakikita mo>,
+  "ai_action_plan": ["aksyon 1", "aksyon 2", "aksyon 3"]
+}
+
+Mga alituntunin sa severity:
+- critical: agarang banta sa buhay, kailangan ng aktibong pagliligtas, may mga nakakulong o nasa panganib
+- high: malaking panganib, kailangan ng agarang aksyon, nasa panganib ang ari-arian
+- medium: nakababahala na sitwasyon, kailangan ng aksyon sa loob ng ilang oras
+- low: minor na insidente, sapat ang pagsubaybay
+
+Isaalang-alang ang profile ng nag-ulat kapag tinatantiya ang severity at mga taong nasa panganib. Ang mga matatanda, may kapansanan, may alagang hayop, at naninirahan sa ibaba ng bahay ay mas nasa panganib sa mga kalamidad.
+
+Ang ai_summary, ai_action_plan, at iba pang tekstong pakikipag-ugnayan sa gumagamit ay dapat nasa Filipino. Huwag magbigay ng impormasyong walang kinalaman sa emerhensya o kalamidad.
+
+Konteksto:${context || '\n- Walang karagdagang konteksto.'}`;
 }
 
 function validateResult(data) {
@@ -84,6 +120,33 @@ function parseJsonFromResponse(text) {
   const trimmed = text.trim();
   const withoutMarkdown = trimmed.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '');
   return JSON.parse(withoutMarkdown);
+}
+
+function validateBaselineResult(data) {
+  if (!data || typeof data !== 'object') throw new Error('Invalid baseline AI response: not an object');
+
+  if (!SEVERITY_VALUES.includes(data.risk_level)) {
+    throw new Error(`Invalid baseline AI response: risk_level must be one of ${SEVERITY_VALUES.join(', ')}`);
+  }
+
+  if (!Array.isArray(data.vulnerability_factors)) {
+    throw new Error('Invalid baseline AI response: vulnerability_factors must be an array');
+  }
+
+  if (!Array.isArray(data.recommended_actions) || data.recommended_actions.length === 0) {
+    throw new Error('Invalid baseline AI response: recommended_actions must be a non-empty array');
+  }
+
+  if (typeof data.summary !== 'string' || data.summary.length === 0) {
+    throw new Error('Invalid baseline AI response: missing or empty summary');
+  }
+
+  return {
+    risk_level: data.risk_level,
+    vulnerability_factors: data.vulnerability_factors,
+    recommended_actions: data.recommended_actions,
+    summary: data.summary,
+  };
 }
 
 async function callGemini(prompt, imageParts) {
@@ -153,4 +216,27 @@ async function callClusterGemini(prompt) {
 export async function analyzeCluster({ reports, totalPeople, reportCount }) {
   const prompt = buildClusterPrompt({ reports, totalPeople, reportCount });
   return callClusterGemini(prompt);
+}
+
+// ------------------------------------------------------------------
+// Baseline user profile analysis
+// ------------------------------------------------------------------
+
+async function callBaselineGemini(prompt) {
+  const model = genAI.getGenerativeModel({ model: MODEL });
+
+  const result = await model.generateContent({
+    contents: [{ role: 'user', parts: [{ text: prompt }] }],
+    generationConfig: { responseMimeType: 'application/json' },
+  });
+  const response = await result.response;
+  const text = response.text();
+
+  const parsed = parseJsonFromResponse(text);
+  return validateBaselineResult(parsed);
+}
+
+export async function analyzeBaseline({ location, personDetails }) {
+  const prompt = buildBaselinePrompt({ location, personDetails });
+  return callBaselineGemini(prompt);
 }
