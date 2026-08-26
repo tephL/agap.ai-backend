@@ -34,7 +34,7 @@ app.use('/api/clusters', clusterRoutes);
 app.use('/api/my-assignments', myAssignmentsRoute);
 app.use('/api/ai', aiAssistantRoutes);
 app.use('/api/typhoons', typhoonRoutes);
-
+app.get('/hp', (req, res) => { return res.sendStatus(200) });
 app.use((req, res) => res.sendStatus(404));
 
 app.listen(PORT, () => {
