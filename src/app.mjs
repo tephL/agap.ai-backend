@@ -11,6 +11,7 @@ import clusterRoutes from '#/routes/clustersRoute.mjs';
 import dispatcherRoutes from '#/routes/dispatcher.routes.mjs';
 import myAssignmentsRoute from '#/routes/myAssignments.route.mjs';
 import aiAssistantRoutes from '#/routes/aiAssistant.routes.mjs';
+import typhoonRoutes from '#/routes/typhoonRoutes.mjs';
 
 import cors from '#/config/cors.mjs';
 import { startClusterCleanupJob } from '#/jobs/clusterCleanupJob.mjs';
@@ -32,6 +33,7 @@ app.use('/api/dispatcher', dispatcherRoutes);
 app.use('/api/clusters', clusterRoutes);
 app.use('/api/my-assignments', myAssignmentsRoute);
 app.use('/api/ai', aiAssistantRoutes);
+app.use('/api/typhoons', typhoonRoutes);
 
 app.use((req, res) => res.sendStatus(404));
 
