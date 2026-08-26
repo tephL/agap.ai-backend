@@ -124,3 +124,21 @@ export async function getReportById(req, res){
         return res.sendStatus(500);
     }
 }
+
+export async function updateReportStatus(req, res){
+    try{
+        const report_id = Number(req.params.reportId);
+        if(!Number.isInteger(report_id) || report_id <= 0){
+            return res.status(400).json({ message: "Invalid report id" });
+        }
+
+        const { status } = matchedData(req);
+        const updated = await reportServ.updateReportStatus({ report_id, status });
+        if(!updated) return res.status(404).json({ message: "Report not found" });
+
+        return res.status(200).json({ report: updated });
+    } catch(e){
+        console.log(e);
+        return res.sendStatus(500);
+    }
+}
