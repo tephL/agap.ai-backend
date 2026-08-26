@@ -50,6 +50,14 @@ export async function getReportDetailsById({ report_id }){
                    u.username AS reporter_username,
                    p.first_name,
                    p.last_name,
+                   p.age,
+                   p.gender,
+                   p.city AS person_city,
+                   p.barangay AS person_barangay,
+                   p.street,
+                   p.address,
+                   p.disabilities,
+                   p.pets,
                    rc.cluster_id
             FROM reports r
                 LEFT JOIN users u
@@ -75,7 +83,11 @@ export async function getReportDetailsById({ report_id }){
         const images = await query(imagesText, values);
 
         const row = report.rows[0];
-        const { reported_by, reporter_username, first_name, last_name, ...rest } = row;
+        const {
+            reported_by, reporter_username, first_name, last_name,
+            age, gender, person_city, person_barangay, street, address, disabilities, pets,
+            ...rest
+        } = row;
         return {
             ...rest,
             images: images.rows,
@@ -83,6 +95,14 @@ export async function getReportDetailsById({ report_id }){
                 user_id: reported_by,
                 username: reporter_username,
                 name: [first_name, last_name].filter(Boolean).join(' '),
+                age,
+                gender,
+                city: person_city,
+                barangay: person_barangay,
+                street,
+                address,
+                disabilities,
+                pets,
             },
         };
     } catch(e){
