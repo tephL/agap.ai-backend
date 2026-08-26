@@ -291,6 +291,49 @@ export async function inviteMember(req, res) {
     }
 }
 
+export async function leaveFamily(req, res) {
+    try {
+        const { id: familyId } = req.params;
+
+        const isMember = await familyService.isAcceptedMember(
+            familyId,
+            req.user.user_id
+        );
+
+        if (!isMember) {
+            return res.status(403).json({
+                error: 'You are not a member of this family'
+            });
+        }
+
+        const left = await familyService.leaveFamily(
+            familyId,
+            req.user.user_id
+        );
+
+        if (!left) {
+            return res.status(404).json({
+                error: 'Member not found'
+            });
+        }
+
+        res.status(204).send();
+
+    } catch (err) {
+        if (err.code === 'CREATOR_CANNOT_LEAVE') {
+            return res.status(403).json({
+                error: err.message
+            });
+        }
+
+        console.error(err);
+
+        res.status(500).json({
+            error: 'Something went wrong'
+        });
+    }
+}
+
 export async function removeMember(req, res) {
     try {
         const { id: familyId, memberId } = req.params;

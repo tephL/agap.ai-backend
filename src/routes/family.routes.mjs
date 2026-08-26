@@ -22,4 +22,5 @@ router.put('/:id', isUserLoggedIn, updateFamilyValidator, validate, familyContro
 router.delete('/:id', isUserLoggedIn, familyIdParamValidator, validate, familyController.deleteFamily);
 router.post('/:id/invite', isUserLoggedIn, inviteMemberValidator, validate, familyController.inviteMember);
 router.delete('/:id/members/:memberId', isUserLoggedIn, familyMemberIdParamValidator, validate, familyController.removeMember);
+router.post('/:id/leave', isUserLoggedIn, familyIdParamValidator, validate, familyController.leaveFamily);
 export default router;
