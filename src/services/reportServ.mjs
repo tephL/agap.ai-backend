@@ -35,6 +35,22 @@ export async function attachDescriptionToReport({ report_id, description }){
     }
 }
 
+const REPORT_STATUSES = ['open', 'saved', 'resolved'];
+
+export async function updateReportStatus({ report_id, status }){
+    if(!REPORT_STATUSES.includes(status)){
+        throw new Error(`Invalid status: must be one of ${REPORT_STATUSES.join(', ')}`);
+    }
+    try{
+        const text = `UPDATE reports SET status = $2 WHERE report_id = $1 RETURNING report_id, status;`;
+        const values = [report_id, status];
+        const result = await query(text, values);
+        return result.rows[0] || null;
+    } catch(e){
+        throw e;
+    }
+}
+
 export async function getReportDetailsById({ report_id }){
     try{
         const text = `
