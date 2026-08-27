@@ -153,6 +153,23 @@ export async function deleteFamily(familyId) {
   return result.rows[0] ?? null;
 }
 
+export async function leaveFamily(familyId, userId) {
+  const isCreator = await isFamilyCreator(familyId, userId);
+  if (isCreator) {
+    const err = new Error('The family creator cannot leave. Delete the family instead.');
+    err.code = 'CREATOR_CANNOT_LEAVE';
+    throw err;
+  }
+
+  const result = await query(
+    `DELETE FROM family_members
+     WHERE family_id = $1 AND user_id = $2 AND status = 'accepted'
+     RETURNING family_member_id`,
+    [familyId, userId]
+  );
+  return result.rows[0] ?? null;
+}
+
 export async function removeMember(familyId, memberId, requestingUserId) {
   const memberRes = await query(
     `SELECT * FROM family_members
