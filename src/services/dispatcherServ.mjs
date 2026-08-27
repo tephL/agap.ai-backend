@@ -16,6 +16,7 @@ const TEAM_SELECT = `
            ci.name AS location_text,
            t.latitude AS lat, t.longitude AS lng,
            t.assigned_to,
+           t.is_public,
            CASE
                WHEN t.archived_at IS NOT NULL THEN 'offline'
                WHEN t.assigned_to IS NOT NULL THEN 'busy'
@@ -59,6 +60,58 @@ export async function createTeam({ name, contact_number, latitude, longitude }, 
     const values = [name, contact_number ?? null, latitude ?? null, longitude ?? null, city_id];
     const result = await query(text, values);
     return result.rows[0];
+}
+
+export async function updateTeam(team_id, { is_public }, city_id) {
+    const text = `
+        ${TEAM_SELECT}
+        WHERE t.team_id = $1 AND t.city_id = $2 AND t.archived_at IS NULL;`;
+    const existing = await query(text, [team_id, city_id]);
+    if (existing.rowCount === 0) return null;
+
+    const result = await query(
+        `UPDATE teams SET is_public = $2
+         WHERE team_id = $1 AND city_id = $3
+         RETURNING team_id;`,
+        [team_id, is_public, city_id]
+    );
+    if (result.rowCount === 0) return null;
+
+    const updated = await query(text, [team_id, city_id]);
+    return updated.rows[0];
+}
+
+export async function relocateTeam(team_id, { latitude, longitude }, city_id) {
+    const text = `
+        ${TEAM_SELECT}
+        WHERE t.team_id = $1 AND t.city_id = $2 AND t.archived_at IS NULL;`;
+    const existing = await query(text, [team_id, city_id]);
+    if (existing.rowCount === 0) return null;
+
+    const result = await query(
+        `UPDATE teams SET latitude = $2, longitude = $3
+         WHERE team_id = $1 AND city_id = $4
+         RETURNING team_id;`,
+        [team_id, latitude, longitude, city_id]
+    );
+    if (result.rowCount === 0) return null;
+
+    const updated = await query(text, [team_id, city_id]);
+    return updated.rows[0];
+}
+
+export async function getPublicTeams(city_id) {
+    const text = `
+        SELECT t.team_id, t.name,
+               t.latitude AS lat, t.longitude AS lng
+        FROM teams t
+        WHERE t.city_id = $1
+          AND t.is_public = TRUE
+          AND t.archived_at IS NULL
+          AND t.latitude IS NOT NULL
+          AND t.longitude IS NOT NULL;`;
+    const result = await query(text, [city_id]);
+    return result.rows;
 }
 
 // ------------------------------------------------------------------

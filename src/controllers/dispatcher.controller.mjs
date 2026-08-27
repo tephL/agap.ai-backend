@@ -71,6 +71,38 @@ export async function getTeamAssignment(req, res) {
     }
 }
 
+export async function updateTeam(req, res) {
+    try {
+        const cityId = await cityOfDispatcher(req);
+        if (!cityId) return res.status(404).json({ error: "Team not found" });
+
+        const teamId = Number(req.params.teamId);
+        const { is_public } = matchedData(req);
+
+        const team = await dispatcherServ.updateTeam(teamId, { is_public }, cityId);
+        if (!team) return res.status(404).json({ error: "Team not found" });
+        return res.json({ team });
+    } catch (err) {
+        return sendError(res, err, "Failed to update team");
+    }
+}
+
+export async function relocateTeam(req, res) {
+    try {
+        const cityId = await cityOfDispatcher(req);
+        if (!cityId) return res.status(404).json({ error: "Team not found" });
+
+        const teamId = Number(req.params.teamId);
+        const { latitude, longitude } = matchedData(req);
+
+        const team = await dispatcherServ.relocateTeam(teamId, { latitude, longitude }, cityId);
+        if (!team) return res.status(404).json({ error: "Team not found" });
+        return res.json({ team });
+    } catch (err) {
+        return sendError(res, err, "Failed to relocate team");
+    }
+}
+
 // ------------------------------------------------------------------
 // Clusters
 // ------------------------------------------------------------------

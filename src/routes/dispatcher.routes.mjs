@@ -11,6 +11,8 @@ import {
   assignmentStatusBodyValidator,
   createAssignmentValidator,
   clusterListQueryValidator,
+  updateTeamValidator,
+  relocateTeamValidator,
 } from '#/validators/dispatcher.validators.mjs';
 
 const router = Router();
@@ -25,6 +27,20 @@ router.get(
   teamIdParamValidator,
   validate,
   dispatcherController.getTeamAssignment
+);
+router.patch(
+  '/teams/:teamId',
+  teamIdParamValidator,
+  updateTeamValidator,
+  validate,
+  dispatcherController.updateTeam
+);
+router.patch(
+  '/teams/:teamId/relocate',
+  teamIdParamValidator,
+  relocateTeamValidator,
+  validate,
+  dispatcherController.relocateTeam
 );
 
 router.get(
