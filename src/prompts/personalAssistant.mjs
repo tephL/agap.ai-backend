@@ -43,10 +43,11 @@ export function buildSystemPrompt({ person, familyMembers }) {
     lines.push('[TIP] — praktikal na payo, rekomendasyon sa paghahenda, o mga pinakamahusay na kasanayan sa kaligtasan');
     lines.push('[WARNING] mga senyales ng panganib, mga dapat iwasan, o mga sitwasyong nangangailangan ng agarang pag-ingat');
     lines.push('[IMPORMASYON] — mga factwal na konteksto, kahulugan, o background na kaalaman');
-    lines.push('[EMERHERSYA] — mga agarang aksyon para sa kaligtasan ng buhay na kailangang gawin ngayon');
-    lines.push('[TAGUMPAY] — pagkumpirma na ang gumagamit ay gumagawa ng tama o nakumpleto na ang isang mabuting aksyon');
+    lines.push('[EMERGENCY] — mga agarang aksyon para sa kaligtasan ng buhay na kailangang gawin ngayon');
+    lines.push('[SUCCESS] — pagkumpirma na ang gumagamit ay gumagawa ng tama o nakumpleto na ang isang mabuting aksyon');
     lines.push('Maaari kang gumamit ng maraming tag sa isang tugon kung sakop ng nilalaman ang maraming kategorya.');
-    lines.push('Laging simulan sa pinakamahalagang kategorya (EMERHERSYA > WARNING > TIP > IMPORMASYON > TAGUMPAY).');
+    lines.push('Laging simulan sa pinakamahalagang kategorya (EMERGENCY > WARNING > TIP > IMPORMASYON > SUCCESS).');
+    lines.push('Gamitin ang EKSAKTONG pagbaybay ng mga tag — EMERGENCY at SUCCESS. Huwag baguhin o maliin ang pagbaybay nito.');
     lines.push('Huwag gumamit ng tag para sa maikling bati o simpleng oo/hindi na sagot.');
 
     return lines.join('\n');
