@@ -9,7 +9,11 @@ const DISASTER_TYPES = [
   'storm_surge', 'collapse', 'other',
 ];
 
-const SYSTEM_PROMPT = `Ikaw ay isang AI na tumutugon sa mga kaganapang pang-emergency para sa isang disaster reporting system sa Pilipinas. Wastong suriin ang datos ng ulat at magbigay ng JSON na tugon. Tiyakin na ang bawat detalye ay may kinalaman sa emerhensya o kalamidad. Huwag magbigay ng impormasyon na wala sa paksa.`;
+const SYSTEM_PROMPT = `Ikaw ay isang AI na tumutugon sa mga kaganapang pang-emergency para sa isang disaster reporting system sa Pilipinas. Wastong suriin ang datos ng ulat at magbigay ng JSON na tugon. Tiyakin na ang bawat detalye ay may kinalaman sa emerhensya o kalamidad. Huwag magbigay ng impormasyon na wala sa paksa.
+
+MGA PANGUNAHING TUNTUNIN (para sa lahat ng teksto):
+- CONCISE: Magbigay ng PINAKAMAIKLING sagot na posible. Direktahin ang punto. Huwag magdagdag ng hindi kinakailangang paliwanag o salita. Isang pangungusap o ilang bullet lang kung sapat na.
+- TAGALOG: Lahat ng teksto (summary, action plan, rekomendasyon) ay dapat nasa malinaw na Tagalog. Iwasan ang labis na English terms maliban kung walang eksaktong salin.`;
 
 function buildBaselinePrompt({ location, personDetails }) {
   let context = '';
@@ -31,16 +35,17 @@ function buildBaselinePrompt({ location, personDetails }) {
 Suriin ang profile ng gumagamit at ang kanyang lokasyon upang lumikha ng baseline na panganib na pagtatasa para sa mga kalamidad. I-return LANG ang valid na JSON object (walang markdown, walang backticks) na may mga field na ito:
 {
   "risk_level": "critical", "high", "medium", o "low",
-  "vulnerability_factors": ["factor 1", "factor 2"],
-  "recommended_actions": ["action 1", "action 2", "action 3"],
-  "summary": "Maikling buod ng panganib at rekomendasyon para sa gumagamit, isang paragraph lang"
+  "vulnerability_factors": ["1-3 na pinakamahalagang salik"],
+  "recommended_actions": ["2-3 na pinakamahalagang hakbang"],
+  "summary": "Napakaikling buod ng panganib at ang pinakamahalagang dapat tandaan, 1-2 pangungusap lang sa Tagalog"
 }
 
 Mga alituntunin:
+- CONCISE: Limitahan ang vulnerability_factors sa 1-3 at recommended_actions sa 2-3. Maikli at diretso ang bawat bullet.
 - Tanging ang mga kadahilanang may kinalaman sa panganib at kalamidad lang ang isama (edad, kapansanan, lokasyon, uri ng bahay, alagang hayop)
 - Ang mga recommended_actions ay dapat nakatuon sa paghahanda at kaligtasan ng panganib
 - Huwag magbigay ng impormasyong walang kinalaman sa emerhensya o kalamidad
-- Isalin ang lahat ng teksto sa Filipino
+- Lahat ng teksto (vulnerability_factors, recommended_actions, summary) ay dapat nasa malinaw na Filipino
 
 Konteksto:${context || '\n- Walang karagdagang konteksto.'}`;
 }
@@ -64,11 +69,11 @@ function buildPrompt({ description, location, personDetails }) {
 
 Suriin ang ulat na ito ng emerhensya at ibalik LANG ang valid na JSON object (walang markdown, walang backticks) na may mga field na ito:
 {
-  "ai_summary": "Maikling buod ng sitwasyon sa 1-2 pangungusap, sa Filipino",
+  "ai_summary": "Pinakamaikling buod ng sitwasyon, 1 pangungusap lang, sa Filipino",
   "ai_disaster_type": "Isa sa mga: ${DISASTER_TYPES.join(', ')}",
   "ai_severity": "Isa sa mga: ${SEVERITY_VALUES.join(', ')}",
   "ai_people_estimate": <integer, tinatayang bilang ng mga taong apektado batay sa nakikita mo>,
-  "ai_action_plan": ["aksyon 1", "aksyon 2", "aksyon 3"]
+  "ai_action_plan": ["1-3 na pinakamahalagang aksyon"]
 }
 
 Mga alituntunin sa severity:
@@ -77,9 +82,13 @@ Mga alituntunin sa severity:
 - medium: nakababahala na sitwasyon, kailangan ng aksyon sa loob ng ilang oras
 - low: minor na insidente, sapat ang pagsubaybay
 
+CONCISE na tuntunin:
+- Limitahan ang ai_action_plan sa pinakamarami 3 aksyon, bawat isa ay 1-3 salita o maikling parirala. Direkta ang punto, walang paligoy-ligoy.
+- Ang ai_summary ay dapat isang maikling pangungusap lang na nagpapakita ng pinakamahalagang impormasyon.
+
 Isaalang-alang ang profile ng nag-ulat kapag tinatantiya ang severity at mga taong nasa panganib. Ang mga matatanda, may kapansanan, may alagang hayop, at naninirahan sa ibaba ng bahay ay mas nasa panganib sa mga kalamidad.
 
-Ang ai_summary, ai_action_plan, at iba pang tekstong pakikipag-ugnayan sa gumagamit ay dapat nasa Filipino. Huwag magbigay ng impormasyong walang kinalaman sa emerhensya o kalamidad.
+Ang ai_summary at ai_action_plan ay dapat nasa malinaw na Filipino (hindi mixed). Huwag magbigay ng impormasyong walang kinalaman sa emerhensya o kalamidad.
 
 Konteksto:${context || '\n- Walang karagdagang konteksto.'}`;
 }

@@ -10,6 +10,7 @@ import userRoutes from '#/routes/userRoutes.mjs';
 import clusterRoutes from '#/routes/clustersRoute.mjs';
 import dispatcherRoutes from '#/routes/dispatcher.routes.mjs';
 import myAssignmentsRoute from '#/routes/myAssignments.route.mjs';
+import publicTeamsRoute from '#/routes/publicTeams.route.mjs';
 import aiAssistantRoutes from '#/routes/aiAssistant.routes.mjs';
 import typhoonRoutes from '#/routes/typhoonRoutes.mjs';
 
@@ -32,6 +33,7 @@ app.use('/api/reports', reportRoutes);
 app.use('/api/dispatcher', dispatcherRoutes);
 app.use('/api/clusters', clusterRoutes);
 app.use('/api/my-assignments', myAssignmentsRoute);
+app.use('/api/public-teams', publicTeamsRoute);
 app.use('/api/ai', aiAssistantRoutes);
 app.use('/api/typhoons', typhoonRoutes);
 app.get('/hp', (req, res) => { return res.sendStatus(200) });
