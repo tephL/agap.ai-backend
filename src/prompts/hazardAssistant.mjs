@@ -39,6 +39,13 @@ const FLOOD_LAYER_LABELS = {
   flood_100yr: 'Flood Risk (100-Year Return Period)',
 };
 
+/** Matches the app's flood legend: flood `Var` property 1 = low, 2 = medium, 3 = high. */
+const VAR_LEVEL_LABELS = {
+  1: 'Mababa (0–0.5 m na lalim ng tubig)',
+  2: 'Katamtaman (0.5–1.5 m na lalim ng tubig)',
+  3: 'Mataas (higit sa 1.5 m na lalim ng tubig)',
+};
+
 /**
  * Fetch the flood hazard levels at the user's saved location, e.g.
  *   { flood_5yr: 'High', flood_25yr: 'Medium', flood_100yr: 'None' }
@@ -93,20 +100,39 @@ export function buildHazardInstructions(hasLocationContext) {
 /**
  * Build extra system-instruction content for hazard questions, or null when
  * the message is not about hazards. Combines the authoritative layer
- * reference, the user's real flood risk at their saved location, and
- * hazard-specific response instructions.
+ * reference, the user's real flood risk, and hazard-specific response
+ * instructions.
+ *
+ * Flood risk comes from one of two sources:
+ * - `clientContext` ({ hazardLayerId, hazardVar }): the phone resolved the
+ *   rendered hazard layer under the user's location (the primary path). The
+ *   var level (1/2/3) is exactly what the map paints, so this is trusted.
+ * - otherwise it falls back to the server-side spatial lookup of the user's
+ *   saved coordinates (hazardServ).
  */
-export async function buildHazardEnrichment(user_id, message) {
+export async function buildHazardEnrichment(user_id, message, clientContext) {
   if (!isHazardQuestion(message)) return null;
 
-  let hazard = null;
-  try {
-    hazard = await getHazardContextForUser(user_id);
-  } catch (e) {
-    console.warn(`Hazard context failed for user ${user_id}:`, e.message);
+  let contextText = '';
+
+  const clientLayerId = clientContext?.hazardLayerId;
+  const clientVar = clientContext?.hazardVar;
+  const clientLabel = FLOOD_LAYER_LABELS[clientLayerId];
+  const clientLevelLabel = VAR_LEVEL_LABELS[clientVar];
+  if (clientLayerId && clientLabel && clientLevelLabel !== undefined) {
+    contextText =
+      `Aktwal na panganib sa lokasyon ng gumagamit (mula sa hazard layer na in-on ng gumagamit sa kanyang app): ` +
+      `sa layer na "${clientLabel}", ang kanyang lokasyon ay nasa ${clientLevelLabel} na panganib (halagang Var = ${clientVar}).`;
+  } else {
+    let hazard = null;
+    try {
+      hazard = await getHazardContextForUser(user_id);
+    } catch (e) {
+      console.warn(`Hazard context failed for user ${user_id}:`, e.message);
+    }
+    contextText = buildHazardContextText(hazard);
   }
 
-  const contextText = buildHazardContextText(hazard);
   const parts = [HAZARD_LAYER_REFERENCE];
   if (contextText) parts.push(contextText);
   parts.push(buildHazardInstructions(Boolean(contextText)));

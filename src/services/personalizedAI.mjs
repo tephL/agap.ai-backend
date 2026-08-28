@@ -42,11 +42,11 @@ function toGeminiHistory(messages) {
     }));
 }
 
-export async function chat(user_id, message) {
+export async function chat(user_id, message, hazardContext) {
     const { person, familyMembers } = await buildPersonalContext(user_id);
     const systemText = buildSystemPrompt({ person, familyMembers });
 
-    const hazardEnrichment = await buildHazardEnrichment(user_id, message);
+    const hazardEnrichment = await buildHazardEnrichment(user_id, message, hazardContext);
     const fullSystemText = hazardEnrichment
         ? `${systemText}\n\n${hazardEnrichment}`
         : systemText;

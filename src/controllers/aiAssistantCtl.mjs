@@ -6,8 +6,9 @@ export async function chat(req, res) {
     try {
         const { user_id } = whoIsUser(req);
         const { message } = matchedData(req);
+        const hazardContext = req.body?.hazardContext || null;
 
-        const reply = await personalizedAI.chat(user_id, message);
+        const reply = await personalizedAI.chat(user_id, message, hazardContext);
         return res.status(200).json({ reply });
     } catch (e) {
         console.error('AI chat error:', e.message);
