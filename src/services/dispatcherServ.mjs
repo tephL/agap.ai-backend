@@ -43,21 +43,22 @@ export async function getTeamById(team_id, city_id) {
     return result.rows[0] ?? null;
 }
 
-export async function createTeam({ name, contact_number, latitude, longitude }, city_id) {
+export async function createTeam({ name, contact_number, latitude, longitude, is_public = false }, city_id) {
     const text = `
         WITH new_team AS (
-            INSERT INTO teams (name, contact_number, latitude, longitude, city_id)
-            VALUES ($1, $2, $3, $4, $5)
-            RETURNING team_id, name, contact_number, latitude, longitude, created_at, city_id
+            INSERT INTO teams (name, contact_number, latitude, longitude, is_public, city_id)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            RETURNING team_id, name, contact_number, latitude, longitude, created_at, city_id, is_public
         )
         SELECT nt.team_id, nt.name, nt.contact_number,
                ci.name AS location_text,
                nt.latitude AS lat, nt.longitude AS lng,
                'available' AS status,
+               nt.is_public,
                nt.created_at
         FROM new_team nt
         LEFT JOIN cities ci ON ci.city_id = nt.city_id;`;
-    const values = [name, contact_number ?? null, latitude ?? null, longitude ?? null, city_id];
+    const values = [name, contact_number ?? null, latitude ?? null, longitude ?? null, is_public, city_id];
     const result = await query(text, values);
     return result.rows[0];
 }

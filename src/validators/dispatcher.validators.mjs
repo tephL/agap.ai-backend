@@ -20,6 +20,10 @@ export const createTeamValidator = [
     .optional({ values: 'falsy' })
     .isFloat({ min: -180, max: 180 }).withMessage('longitude must be between -180 and 180')
     .toFloat(),
+  body('is_public')
+    .optional()
+    .isBoolean().withMessage('is_public must be a boolean')
+    .toBoolean(),
 ];
 
 export const teamIdParamValidator = [
