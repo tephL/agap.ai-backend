@@ -3,6 +3,7 @@ import * as conversationServ from '#/services/conversationServ.mjs';
 import * as peopleServ from '#/services/peopleServ.mjs';
 import * as familyServ from '#/services/family.service.mjs';
 import { buildSystemPrompt } from '#/prompts/personalAssistant.mjs';
+import { buildHazardEnrichment } from '#/prompts/hazardAssistant.mjs';
 
 const MODEL = 'gemini-3.5-flash-lite';
 const HISTORY_LIMIT = 20;
@@ -41,16 +42,21 @@ function toGeminiHistory(messages) {
     }));
 }
 
-export async function chat(user_id, message) {
+export async function chat(user_id, message, hazardContext) {
     const { person, familyMembers } = await buildPersonalContext(user_id);
     const systemText = buildSystemPrompt({ person, familyMembers });
+
+    const hazardEnrichment = await buildHazardEnrichment(user_id, message, hazardContext);
+    const fullSystemText = hazardEnrichment
+        ? `${systemText}\n\n${hazardEnrichment}`
+        : systemText;
 
     const historyRows = await conversationServ.getHistory(user_id, { limit: HISTORY_LIMIT });
     const geminiHistory = toGeminiHistory(historyRows);
 
     const model = genAI.getGenerativeModel({
         model: MODEL,
-        systemInstruction: systemText,
+        systemInstruction: fullSystemText,
     });
 
     const chatSession = model.startChat({ history: geminiHistory });
