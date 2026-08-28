@@ -42,6 +42,12 @@ router.patch(
   validate,
   dispatcherController.relocateTeam
 );
+router.delete(
+  '/teams/:teamId',
+  teamIdParamValidator,
+  validate,
+  dispatcherController.deleteTeam
+);
 
 router.get(
   '/clusters',

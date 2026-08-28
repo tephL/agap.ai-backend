@@ -104,6 +104,20 @@ export async function relocateTeam(req, res) {
     }
 }
 
+export async function deleteTeam(req, res) {
+    try {
+        const cityId = await cityOfDispatcher(req);
+        if (!cityId) return res.status(404).json({ error: "Team not found" });
+
+        const teamId = Number(req.params.teamId);
+        const team = await dispatcherServ.deleteTeam(teamId, cityId);
+        if (!team) return res.status(404).json({ error: "Team not found" });
+        return res.json({ success: true });
+    } catch (err) {
+        return sendError(res, err, "Failed to delete team");
+    }
+}
+
 // ------------------------------------------------------------------
 // Clusters
 // ------------------------------------------------------------------
