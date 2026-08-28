@@ -101,6 +101,27 @@ export async function relocateTeam(team_id, { latitude, longitude }, city_id) {
     return updated.rows[0];
 }
 
+// Deleting a team archives it so it drops out of every list, map, and
+// public feed while its assignment history stays on record. Scoped to the
+// dispatcher's city like every other team operation.
+export async function deleteTeam(team_id, city_id) {
+    return withTransaction(async (client) => {
+        const existing = await client.query(
+            `SELECT team_id FROM teams
+             WHERE team_id = $1 AND city_id = $2 AND archived_at IS NULL
+             FOR UPDATE;`,
+            [team_id, city_id]
+        );
+        if (existing.rowCount === 0) return null;
+
+        await client.query(
+            `UPDATE teams SET archived_at = now() WHERE team_id = $1;`,
+            [team_id]
+        );
+        return existing.rows[0];
+    });
+}
+
 export async function getPublicTeams(city_id) {
     const text = `
         SELECT t.team_id, t.name,
