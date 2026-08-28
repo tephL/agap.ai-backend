@@ -46,6 +46,7 @@ export async function createTeam(req, res) {
                 contact_number: data.contact_number,
                 latitude: data.latitude,
                 longitude: data.longitude,
+                is_public: data.is_public ?? false,
             },
             cityId
         );
