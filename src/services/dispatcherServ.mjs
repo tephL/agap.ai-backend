@@ -188,6 +188,15 @@ export async function setClusterStatus(cluster_id, status, city_id) {
                  WHERE cluster_id = $1 AND status <> 'resolved';`,
                 [cluster_id]
             );
+            await client.query(
+                `UPDATE reports r
+                 SET status = 'resolved'
+                 FROM report_clusters rc
+                 WHERE rc.cluster_id = $1
+                   AND rc.report_id = r.report_id
+                   AND r.status <> 'resolved';`,
+                [cluster_id]
+            );
             // Release every team whose current pointer is this cluster and
             // that has no other active assignment left.
             await client.query(
