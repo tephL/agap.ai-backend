@@ -51,11 +51,58 @@ export async function analyzeReport({ report_id }) {
   }
 }
 
+// Re-evaluates the cluster a report belongs to after a status change (e.g.
+// resolve) or removal, so the cluster's priority/severity reflects the
+// reports that are still active. Only recalculates the deterministic stats
+// (no Gemini call) since the report count in the cluster won't have changed
+// meaningfully for a single status flip.
+export async function reevaluateClusterForReport({ report_id }) {
+  try {
+    const clusterLink = await fetchClusterForReport(report_id);
+    if (!clusterLink) return null;
+
+    const reports = await fetchReportsForCluster(clusterLink.cluster_id);
+
+    // No active reports remain — reset the cluster's aggregate state so it
+    // doesn't hold a stale high priority until cleanup removes it.
+    const emptySummary = {
+      ai_summary: null,
+      ai_severity: null,
+      ai_disaster_type: null,
+      priority_level: 'low',
+      people_affected: 0,
+      action_plan: [],
+    };
+
+    if (!reports.length) {
+      await writeClusterAI({ cluster_id: clusterLink.cluster_id, summary: emptySummary });
+      return emptySummary;
+    }
+
+    const stats = computeClusterStats(reports);
+
+    const summary = {
+      ai_summary: stats.mergedSummaries,
+      ai_severity: stats.maxSeverity,
+      ai_disaster_type: stats.dominantType,
+      priority_level: stats.priority,
+      people_affected: stats.people_affected,
+      action_plan: stats.actionPlan,
+    };
+
+    await writeClusterAI({ cluster_id: clusterLink.cluster_id, summary });
+
+    return summary;
+  } catch (e) {
+    console.error(`Cluster re-evaluation on status change failed for report ${report_id}:`, e.message);
+    return null;
+  }
+}
+
 export async function reevaluateCluster({ cluster_id }) {
   try {
     const reports = await fetchReportsForCluster(cluster_id);
     if (!reports.length) return null;
-
     const stats = computeClusterStats(reports);
 
     let aiResult;
@@ -180,15 +227,44 @@ async function fetchReportsForCluster(cluster_id) {
 
 const SEVERITY_RANK = { critical: 4, high: 3, medium: 2, low: 1 };
 
+// Deterministic responder-side action plan for a cluster. Notably it does NOT
+// reuse individual reports' action plans: those are written for the citizen
+// reporting the incident (personal safety steps), whereas the cluster-level
+// plan shown to dispatchers/responders must be about coordinating the response.
+function buildResponderActionPlan(stats) {
+  const plan = [];
+  const { dominantType: type, maxSeverity, reportCount, people_affected: people } = stats;
+
+  if (maxSeverity === 'critical' || maxSeverity === 'high') {
+    plan.push(`Ipapadala agad ang rescue/response team sa cluster (${reportCount} ulat, ${people} apektado)`);
+  } else if (reportCount >= 3 || people >= 8) {
+    plan.push(`Mag-coordinate ng response team para sa maraming ulat sa lugar`);
+  }
+
+  const typeActions = {
+    flood: 'Mag-deploy ng rescue boats at i-monitor ang pagtaas ng tubig',
+    fire: 'I-coordinate ang fire response at i-secure ang paligid',
+    earthquake: 'I-coordinate ang search-and-rescue at pag-inspeksyon ng gusali',
+    landslide: 'I-evacuate ang mga apektadong lugar at i-secure ang slope',
+    typhoon: 'I-monitor ang wind/rain at maghanda ng evacuation center',
+    storm_surge: 'Mag-deploy ng coastal evacuation at rescue teams',
+    collapse: 'Mag-deploy ng search-and-rescue sa bumagsak na estruktura',
+  };
+  if (typeActions[type]) plan.push(typeActions[type]);
+
+  plan.push(`Magtalaga ng teams at i-update ang status ng cluster`);
+
+  return plan.slice(0, 4);
+}
+
 function computeClusterStats(reports) {
   let totalPeople = 0;
   let maxSeverity = 'low';
   const disasterCounts = {};
-  const actionPlanSet = new Set();
   const summaries = [];
 
   for (const r of reports) {
-    if (r.ai_people_estimate) totalPeople += r.ai_people_estimate;
+    if (r.ai_people_estimate) totalPeople = Math.max(totalPeople, r.ai_people_estimate);
 
     if (r.ai_severity && SEVERITY_RANK[r.ai_severity] > SEVERITY_RANK[maxSeverity]) {
       maxSeverity = r.ai_severity;
@@ -196,10 +272,6 @@ function computeClusterStats(reports) {
 
     if (r.ai_disaster_type) {
       disasterCounts[r.ai_disaster_type] = (disasterCounts[r.ai_disaster_type] || 0) + 1;
-    }
-
-    if (Array.isArray(r.ai_action_plan)) {
-      r.ai_action_plan.forEach(action => actionPlanSet.add(action));
     }
 
     if (r.ai_summary) summaries.push(r.ai_summary);
@@ -214,19 +286,23 @@ function computeClusterStats(reports) {
     ? summaries.join(' ')
     : `${summaries[0]} ... and ${summaries.length - 1} more reports.`;
 
-  return {
+  const stats = {
     maxSeverity,
     dominantType,
     priority,
     people_affected: totalPeople,
-    actionPlan: [...actionPlanSet].slice(0, 10),
+    report_count: reports.length,
     mergedSummaries,
   };
+
+  stats.actionPlan = buildResponderActionPlan(stats);
+
+  return stats;
 }
 
 function computePriority(maxSeverity, totalPeople, reportCount) {
-  if (maxSeverity === 'critical') return 'high';
-  if (maxSeverity === 'high' && (reportCount >= 3 || totalPeople >= 20)) return 'high';
+  if (maxSeverity === 'critical' || maxSeverity === 'high') return 'high';
+  if (maxSeverity === 'medium' && (reportCount >= 3 || totalPeople >= 8)) return 'high';
   if (reportCount >= 3 || totalPeople >= 8) return 'medium';
   return 'low';
 }

@@ -136,6 +136,10 @@ export async function updateReportStatus(req, res){
         const updated = await reportServ.updateReportStatus({ report_id, status });
         if(!updated) return res.status(404).json({ message: "Report not found" });
 
+        aiAnalysisServ.reevaluateClusterForReport({ report_id }).catch(e =>
+            console.error(`Background cluster re-evaluation failed for report ${report_id}:`, e.message)
+        );
+
         return res.status(200).json({ report: updated });
     } catch(e){
         console.log(e);
