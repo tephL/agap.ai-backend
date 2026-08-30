@@ -1,6 +1,9 @@
 import { query } from '#/services/db.mjs';
 
-const EPS_METERS = 400; 
+// Distance (in meters) within which a new report is merged into an existing
+// cluster instead of starting a new one. Configurable via CLUSTER_RADIUS_M so
+// operators can tune it per deployment context (dense urban vs sparse rural).
+const EPS_METERS = Number(process.env.CLUSTER_RADIUS_M) || 400;
 
 export async function getClustersFromCityOfDispatcher(user_id){
   try{
@@ -232,11 +235,11 @@ export async function updateClusterStats(cluster_id) {
       SET latitude = sub.avg_lat,
           longitude = sub.avg_lon,
           report_count = sub.cnt,
-          people_affected = GREATEST(sub.people_sum, sub.ai_people_sum),
+          people_affected = GREATEST(sub.people_sum, sub.ai_people_max),
           priority_level = CASE
-            WHEN sub.max_severity = 'critical' THEN 'high'
-            WHEN sub.max_severity = 'high' AND (sub.cnt >= 3 OR sub.ai_people_sum >= 20) THEN 'high'
-            WHEN sub.cnt >= 3 OR sub.ai_people_sum >= 8 THEN 'medium'
+            WHEN sub.max_severity IN ('critical', 'high') THEN 'high'
+            WHEN sub.max_severity = 'medium' AND (sub.cnt >= 3 OR sub.ai_people_max >= 8) THEN 'high'
+            WHEN sub.cnt >= 3 OR sub.ai_people_max >= 8 THEN 'medium'
             WHEN sub.cnt >= 5 OR sub.people_sum >= 20 THEN 'high'
             WHEN sub.cnt >= 3 OR sub.people_sum >= 8 THEN 'medium'
             ELSE 'low'
@@ -252,7 +255,7 @@ export async function updateClusterStats(cluster_id) {
           COUNT(*) AS cnt,
           COALESCE(SUM(r.people_affected), 0) AS people_sum,
           MAX(r.ai_severity) AS max_severity,
-          COALESCE(SUM(r.ai_people_estimate), 0) AS ai_people_sum
+          COALESCE(MAX(r.ai_people_estimate), 0) AS ai_people_max
         FROM report_clusters rc
         JOIN reports r ON r.report_id = rc.report_id
         WHERE rc.cluster_id = $1

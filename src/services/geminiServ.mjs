@@ -63,6 +63,8 @@ function buildPrompt({ description, location, personDetails }) {
     if (personDetails.disabilities?.length) context += `, kapansanan: ${personDetails.disabilities.join(', ')}`;
     if (personDetails.pets?.length) context += `, may alagang hayop: ${personDetails.pets.join(', ')}`;
     if (personDetails.house_floors) context += `, naninirahan sa ${personDetails.house_floors}-palapag na bahay`;
+  } else {
+    context += '\n- Walang available na profile ng nag-ulat: hindi alam ang edad, kasarian, kapansanan, o iba pang vulnerability factor. Huwag idagdag o ibawas sa severity batay sa hindi kilalang data ng nag-ulat.';
   }
 
   return `${SYSTEM_PROMPT}
@@ -87,6 +89,12 @@ CONCISE na tuntunin:
 - Ang ai_summary ay dapat isang maikling pangungusap lang na nagpapakita ng pinakamahalagang impormasyon.
 
 Isaalang-alang ang profile ng nag-ulat kapag tinatantiya ang severity at mga taong nasa panganib. Ang mga matatanda, may kapansanan, may alagang hayop, at naninirahan sa ibaba ng bahay ay mas nasa panganib sa mga kalamidad.
+
+Rationale ng vulnerability weighting (para sa transparency):
+- Ang weighting na ito ay sinasadya: pinangangalagaan nito ang mga at-risk na tao sa pamamagitan ng pag-taas ng severity para sa mas maapektuhan ng kalamidad. Naaapektuhan nito ang cluster priority sa pamamagitan ng maxSeverity.
+- Ang gender ay kasama lamang bilang isang maingat na factor (hal. buntis, matatandang babae sa mababang lugar) at dapat gamitin nang konserbatibo — huwag itaas ang severity batay lamang sa kasarian nang walang tiyak at may-katwirang panganib.
+- Huwag masyadong umasa sa profile ng nag-ulat; ang pangunahing basehan ng severity ay ang katotohanan ng sitwasyon (imga, paglalarawan, lokasyon). Ang profile ay pampalakas (adjacent), hindi kapalit, ng hazard data.
+- Kung walang profile ang nag-ulat, huwag ibawas ang severity dahil lamang dito — ituring itong neutral, hindi mas mababa ang panganib.
 
 Ang ai_summary at ai_action_plan ay dapat nasa malinaw na Filipino (hindi mixed). Huwag magbigay ng impormasyong walang kinalaman sa emerhensya o kalamidad.
 
