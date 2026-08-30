@@ -227,11 +227,40 @@ async function fetchReportsForCluster(cluster_id) {
 
 const SEVERITY_RANK = { critical: 4, high: 3, medium: 2, low: 1 };
 
+// Deterministic responder-side action plan for a cluster. Notably it does NOT
+// reuse individual reports' action plans: those are written for the citizen
+// reporting the incident (personal safety steps), whereas the cluster-level
+// plan shown to dispatchers/responders must be about coordinating the response.
+function buildResponderActionPlan(stats) {
+  const plan = [];
+  const { dominantType: type, maxSeverity, reportCount, people_affected: people } = stats;
+
+  if (maxSeverity === 'critical' || maxSeverity === 'high') {
+    plan.push(`Ipapadala agad ang rescue/response team sa cluster (${reportCount} ulat, ${people} apektado)`);
+  } else if (reportCount >= 3 || people >= 8) {
+    plan.push(`Mag-coordinate ng response team para sa maraming ulat sa lugar`);
+  }
+
+  const typeActions = {
+    flood: 'Mag-deploy ng rescue boats at i-monitor ang pagtaas ng tubig',
+    fire: 'I-coordinate ang fire response at i-secure ang paligid',
+    earthquake: 'I-coordinate ang search-and-rescue at pag-inspeksyon ng gusali',
+    landslide: 'I-evacuate ang mga apektadong lugar at i-secure ang slope',
+    typhoon: 'I-monitor ang wind/rain at maghanda ng evacuation center',
+    storm_surge: 'Mag-deploy ng coastal evacuation at rescue teams',
+    collapse: 'Mag-deploy ng search-and-rescue sa bumagsak na estruktura',
+  };
+  if (typeActions[type]) plan.push(typeActions[type]);
+
+  plan.push(`Magtalaga ng teams at i-update ang status ng cluster`);
+
+  return plan.slice(0, 4);
+}
+
 function computeClusterStats(reports) {
   let totalPeople = 0;
   let maxSeverity = 'low';
   const disasterCounts = {};
-  const actionPlanSet = new Set();
   const summaries = [];
 
   for (const r of reports) {
@@ -243,10 +272,6 @@ function computeClusterStats(reports) {
 
     if (r.ai_disaster_type) {
       disasterCounts[r.ai_disaster_type] = (disasterCounts[r.ai_disaster_type] || 0) + 1;
-    }
-
-    if (Array.isArray(r.ai_action_plan)) {
-      r.ai_action_plan.forEach(action => actionPlanSet.add(action));
     }
 
     if (r.ai_summary) summaries.push(r.ai_summary);
@@ -261,14 +286,18 @@ function computeClusterStats(reports) {
     ? summaries.join(' ')
     : `${summaries[0]} ... and ${summaries.length - 1} more reports.`;
 
-  return {
+  const stats = {
     maxSeverity,
     dominantType,
     priority,
     people_affected: totalPeople,
-    actionPlan: [...actionPlanSet].slice(0, 10),
+    report_count: reports.length,
     mergedSummaries,
   };
+
+  stats.actionPlan = buildResponderActionPlan(stats);
+
+  return stats;
 }
 
 function computePriority(maxSeverity, totalPeople, reportCount) {

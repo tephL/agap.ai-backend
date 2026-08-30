@@ -49,7 +49,7 @@ All reports in a cluster are re-analyzed together. Two paths compute the cluster
 - `totalPeople` = max individual `ai_people_estimate` (de-duplicated, not summed)
 - `maxSeverity` = highest severity rank (`SEVERITY_RANK` = critical:4, high:3, medium:2, low:1)
 - `dominantType` = most frequent disaster type
-- `actionPlan` = deduped union of actions (max 10)
+- `actionPlan` = responder-side plan built deterministically from cluster state (severity, report count, disaster type) — **not** a merge of individual report actions, since those are written for the citizen reporting the incident, not the responders coordinating the response
 - `mergedSummaries` = concatenated summaries
 
 ### B. Gemini cluster synthesis
