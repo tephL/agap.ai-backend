@@ -51,11 +51,58 @@ export async function analyzeReport({ report_id }) {
   }
 }
 
+// Re-evaluates the cluster a report belongs to after a status change (e.g.
+// resolve) or removal, so the cluster's priority/severity reflects the
+// reports that are still active. Only recalculates the deterministic stats
+// (no Gemini call) since the report count in the cluster won't have changed
+// meaningfully for a single status flip.
+export async function reevaluateClusterForReport({ report_id }) {
+  try {
+    const clusterLink = await fetchClusterForReport(report_id);
+    if (!clusterLink) return null;
+
+    const reports = await fetchReportsForCluster(clusterLink.cluster_id);
+
+    // No active reports remain — reset the cluster's aggregate state so it
+    // doesn't hold a stale high priority until cleanup removes it.
+    const emptySummary = {
+      ai_summary: null,
+      ai_severity: null,
+      ai_disaster_type: null,
+      priority_level: 'low',
+      people_affected: 0,
+      action_plan: [],
+    };
+
+    if (!reports.length) {
+      await writeClusterAI({ cluster_id: clusterLink.cluster_id, summary: emptySummary });
+      return emptySummary;
+    }
+
+    const stats = computeClusterStats(reports);
+
+    const summary = {
+      ai_summary: stats.mergedSummaries,
+      ai_severity: stats.maxSeverity,
+      ai_disaster_type: stats.dominantType,
+      priority_level: stats.priority,
+      people_affected: stats.people_affected,
+      action_plan: stats.actionPlan,
+    };
+
+    await writeClusterAI({ cluster_id: clusterLink.cluster_id, summary });
+
+    return summary;
+  } catch (e) {
+    console.error(`Cluster re-evaluation on status change failed for report ${report_id}:`, e.message);
+    return null;
+  }
+}
+
 export async function reevaluateCluster({ cluster_id }) {
   try {
     const reports = await fetchReportsForCluster(cluster_id);
     if (!reports.length) return null;
-
     const stats = computeClusterStats(reports);
 
     let aiResult;

@@ -94,7 +94,8 @@ Core decision table combining **severity × volume × scale**:
 - **Missing reporter profile handled explicitly** — model gets neutral guidance instead of silently skipping vulnerability (`geminiServ.mjs`).
 - **Vulnerability weighting documented** in the prompt, including the rationale for gender; gender is to be used conservatively and never alone to raise severity.
 - **Cluster radius is configurable** via `CLUSTER_RADIUS_M` (default 400m) so operators can tune for urban vs rural density (`clusterServ.mjs:5`).
+- **Resolving a report re-evaluates its cluster** — `updateReportStatus` now triggers `reevaluateClusterForReport` (`reportCtl.mjs`), so when e.g. the 72-year-old is resolved the cluster's severity/priority is recomputed from only the *active* (non-resolved) reports, downgrading the cluster accordingly. If no active reports remain, the cluster's priority is reset to `low` instead of staying stale.
 
 ## Out of scope
 
-- **Staleness/time-decay** (priority downgrade when reports stop) — intentionally not addressed here.
+- **Staleness/time-decay** (automatic downgrade of a cluster when reports simply stop coming in while staying open/unresolved) — intentionally not addressed here; only explicit `resolved` status changes trigger re-evaluation.
