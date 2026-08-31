@@ -396,6 +396,18 @@ export async function updateAssignmentStatus(assignment_id, status, city_id) {
         ]);
 
         if (status === "resolved") {
+            // Once an assignment is resolved, the underlying reports are
+            // handled too — mark them resolved regardless of whether the
+            // cluster is deleted below (mirrors updateClusterStatus).
+            await client.query(
+                `UPDATE reports r
+                 SET status = 'resolved'
+                 FROM report_clusters rc
+                 WHERE rc.cluster_id = $1
+                   AND rc.report_id = r.report_id
+                   AND r.status <> 'resolved';`,
+                [cluster_id]
+            );
             // Once a cluster is fully handled it leaves the board: with no
             // team holding an active assignment on it, delete it (assignment
             // and report links cascade; citizen reports themselves are kept).
