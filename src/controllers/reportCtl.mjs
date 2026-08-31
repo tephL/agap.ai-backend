@@ -79,11 +79,48 @@ export async function reportWithLocation(req, res) {
         console.error(`Background AI analysis failed for report ${report_id}:`, e.message)
     );
 
-    return res.sendStatus(200);
+    return res.status(201).json({ report_id, cluster_id });
   } catch (e) {
     console.log(e);
-    return res.sendStatus(500);
+    return res.status(500).json({ error: "Failed to create report" });
   }
+}
+
+export async function deleteOwnReport(req, res){
+    try{
+        const report_id = Number(req.params.reportId);
+        if(!Number.isInteger(report_id) || report_id <= 0){
+            return res.status(400).json({ message: "Invalid report id" });
+        }
+
+        const { user_id } = helperMid.whoIsUser(req);
+
+        let deleted;
+        try {
+            deleted = await reportServ.deleteReport({ report_id, user_id });
+            if(!deleted) return res.status(404).json({ error: "Report not found" });
+        } catch (e) {
+            // 409 raised by reportServ when an assignment is already dispatched
+            if (e?.name === 'ReportDispatchedError') {
+                return res.status(409).json({ error: e.message });
+            }
+            throw e;
+        }
+
+        // Deleting the report empties its cluster (report_clusters cascades),
+        // so sweep now to remove the now-empty cluster and any cascaded
+        // assignment instead of waiting for the periodic cleanup job.
+        try {
+            await clusterServ.deleteClustersWithoutReports();
+        } catch (e) {
+            console.log(e);
+        }
+
+        return res.status(200).json({ ok: true });
+    } catch(e){
+        console.log(e);
+        return res.status(500).json({ error: "Failed to delete report" });
+    }
 }
 
 export async function attachDescriptionToReport(req, res){
