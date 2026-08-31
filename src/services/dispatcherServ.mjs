@@ -301,7 +301,7 @@ export async function createAssignment({ team_id, cluster_id }, city_id) {
 
         const active = await client.query(
             `SELECT assignment_id FROM assignment
-             WHERE team_id = $1 AND status <> 'resolved'
+             WHERE team_id = $1 AND status <> 'resolved' AND status <> 'cancelled'
              LIMIT 1;`,
             [team_id]
         );
@@ -434,7 +434,7 @@ export async function updateAssignmentStatus(assignment_id, status, city_id) {
         } else {
             const stillBusy = await client.query(
                 `SELECT 1 FROM assignment
-                 WHERE team_id = $1 AND status <> 'resolved'
+                 WHERE team_id = $1 AND status <> 'resolved' AND status <> 'cancelled'
                  LIMIT 1;`,
                 [team_id]
             );
@@ -470,7 +470,7 @@ export async function updateAssignmentStatus(assignment_id, status, city_id) {
             // and report links cascade; citizen reports themselves are kept).
             const activeOnCluster = await client.query(
                 `SELECT 1 FROM assignment
-                 WHERE cluster_id = $1 AND status <> 'resolved'
+                 WHERE cluster_id = $1 AND status <> 'resolved' AND status <> 'cancelled'
                  LIMIT 1;`,
                 [cluster_id]
             );
