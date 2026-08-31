@@ -126,6 +126,22 @@ export async function getMyFamily(req, res) {
     }
 }
 
+export async function getFamilyMembersReportStatus(req, res) {
+    try {
+        const { user_id } = whoIsUser(req);
+        const familyId = await familyService.getFamilyId(user_id);
+        if (familyId.length === 0) {
+            return res.status(400).json({ message: "You dont have a family" });
+        }
+
+        const members = await familyService.getFamilyMembersReportStatus(user_id);
+        return res.status(200).json({ members });
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ error: 'Something went wrong' });
+    }
+}
+
 export async function getFamilyMembers(req, res) {
     try {
         const family = await familyService.getFamilyById(

@@ -14,6 +14,7 @@ const router = Router();
 
 router.post('/', isUserLoggedIn, createFamilyValidator, validate, familyController.createFamily);
 router.get('/location', isUserLoggedIn, familyController.getFamilyLocation);
+router.get('/members/report-status', isUserLoggedIn, familyController.getFamilyMembersReportStatus);
 router.get('/', isUserLoggedIn, familyController.getFamilies);
 router.get('/mine', isUserLoggedIn, familyController.getMyFamily);
 router.get('/:id', isUserLoggedIn, familyIdParamValidator, validate, familyController.getFamilyById);
