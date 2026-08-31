@@ -301,7 +301,7 @@ export async function createAssignment({ team_id, cluster_id }, city_id) {
 
         const active = await client.query(
             `SELECT assignment_id FROM assignment
-             WHERE team_id = $1 AND status <> 'resolved'
+             WHERE team_id = $1 AND status <> 'resolved' AND status <> 'cancelled'
              LIMIT 1;`,
             [team_id]
         );
@@ -335,6 +335,63 @@ export async function createAssignment({ team_id, cluster_id }, city_id) {
 // (e.g. resolved -> dispatched) would resurrect old assignments and can
 // leave a team with two active ones, so they are rejected.
 const ASSIGNMENT_RANK = { pending: 0, dispatched: 1, resolved: 2 };
+
+// Cancelling revokes a dispatch that is pending or en route: the assignment
+// is marked cancelled, and the team is freed (back to available) so it can be
+// re-dispatched. The cluster stays open — it still needs a team — but this
+// one is being pulled off. Terminal: a cancelled assignment cannot be revived.
+export async function cancelAssignment(assignment_id, city_id) {
+    return withTransaction(async (client) => {
+        const current = await client.query(
+            `SELECT a.assignment_id, a.team_id, a.cluster_id, a.status
+             FROM assignment a
+             JOIN teams t ON t.team_id = a.team_id
+             WHERE a.assignment_id = $1 AND t.city_id = $2
+             FOR UPDATE OF a;`,
+            [assignment_id, city_id]
+        );
+        if (current.rowCount === 0) {
+            const err = new Error("Assignment not found");
+            err.statusCode = 404;
+            throw err;
+        }
+        const { team_id, status: currentStatus } = current.rows[0];
+
+        if (currentStatus === "cancelled" || currentStatus === "resolved") {
+            const err = new Error(
+                `Assignment is already ${currentStatus}; only pending or dispatched assignments can be cancelled`
+            );
+            err.statusCode = 409;
+            throw err;
+        }
+
+        const updated = await client.query(
+            `UPDATE assignment SET status = 'cancelled', updated_at = now()
+             WHERE assignment_id = $1
+             RETURNING assignment_id;`,
+            [assignment_id]
+        );
+
+        // Free the team if no other active assignment keeps it busy.
+        const stillBusy = await client.query(
+            `SELECT 1 FROM assignment
+             WHERE team_id = $1 AND status <> 'resolved' AND status <> 'cancelled'
+             LIMIT 1;`,
+            [team_id]
+        );
+        if (stillBusy.rowCount === 0) {
+            await client.query(
+                `UPDATE teams SET assigned_to = NULL WHERE team_id = $1;`,
+                [team_id]
+            );
+        }
+
+        const full = await client.query(assignmentSelect("WHERE a.assignment_id = $1"), [
+            updated.rows[0].assignment_id,
+        ]);
+        return shapeAssignment(full.rows[0]);
+    });
+}
 
 export async function updateAssignmentStatus(assignment_id, status, city_id) {
     return withTransaction(async (client) => {
@@ -377,7 +434,7 @@ export async function updateAssignmentStatus(assignment_id, status, city_id) {
         } else {
             const stillBusy = await client.query(
                 `SELECT 1 FROM assignment
-                 WHERE team_id = $1 AND status <> 'resolved'
+                 WHERE team_id = $1 AND status <> 'resolved' AND status <> 'cancelled'
                  LIMIT 1;`,
                 [team_id]
             );
@@ -413,7 +470,7 @@ export async function updateAssignmentStatus(assignment_id, status, city_id) {
             // and report links cascade; citizen reports themselves are kept).
             const activeOnCluster = await client.query(
                 `SELECT 1 FROM assignment
-                 WHERE cluster_id = $1 AND status <> 'resolved'
+                 WHERE cluster_id = $1 AND status <> 'resolved' AND status <> 'cancelled'
                  LIMIT 1;`,
                 [cluster_id]
             );
