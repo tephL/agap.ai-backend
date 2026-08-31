@@ -1,6 +1,13 @@
 import { query } from "#/services/db.mjs";
 import * as userServ from '#/services/userServ.mjs';
 
+export class ReportDispatchedError extends Error {
+  constructor(message) {
+    super(message || 'A team has already been dispatched to your report cluster and it can no longer be cancelled.');
+    this.name = 'ReportDispatchedError';
+  }
+}
+
 export async function logReportWithCoordinates({ latitude, longitude, user_id }){
     try{
         const text = "INSERT INTO reports(latitude, longitude, reported_by) VALUES($1, $2, $3) RETURNING *;";
@@ -46,6 +53,42 @@ export async function updateReportStatus({ report_id, status }){
         const values = [report_id, status];
         const result = await query(text, values);
         return result.rows[0] || null;
+    } catch(e){
+        throw e;
+    }
+}
+
+/**
+ * Deletes a report owned by the given citizen. Blocks deletion when the
+ * report's cluster already has a dispatched team assignment (a team that is
+ * already en route can't be pulled back by the citizen).
+ *
+ * Returns true if a report was deleted for this owner, false if it didn't
+ * exist (or wasn't owned by them).
+ */
+export async function deleteReport({ report_id, user_id }){
+    try{
+        // Block if a team is already en route to this report's cluster.
+        const dispatchedCheck = `
+            SELECT 1
+            FROM report_clusters rc
+            JOIN assignment a ON a.cluster_id = rc.cluster_id
+            WHERE rc.report_id = $1
+              AND a.status = 'dispatched'
+            LIMIT 1;
+        `;
+        const dispatched = await query(dispatchedCheck, [report_id]);
+        if (dispatched.rows.length > 0) {
+            throw new ReportDispatchedError();
+        }
+
+        // report_images -> images has no ON DELETE CASCADE, so clear links.
+        await query(`DELETE FROM report_images WHERE report_id = $1;`, [report_id]);
+
+        const text = `DELETE FROM reports WHERE report_id = $1 AND reported_by = $2 RETURNING report_id;`;
+        const result = await query(text, [report_id, user_id]);
+
+        return result.rows.length > 0;
     } catch(e){
         throw e;
     }

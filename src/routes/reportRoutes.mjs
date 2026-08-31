@@ -51,4 +51,10 @@ router.patch('/:reportId/status',
     reportCtl.updateReportStatus
 );
 
+router.delete('/:reportId',
+    reportIdParamValidator,
+    helperMid.catchValidationError,
+    reportCtl.deleteOwnReport
+);
+
 export default router
