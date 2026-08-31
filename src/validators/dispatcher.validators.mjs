@@ -1,7 +1,7 @@
 import { body, param, query } from 'express-validator';
 
 const CLUSTER_STATUSES = ['open', 'saved', 'resolved'];
-const ASSIGNMENT_STATUSES = ['pending', 'dispatched', 'resolved'];
+const ASSIGNMENT_STATUSES = ['pending', 'dispatched', 'cancelled', 'resolved'];
 
 export const createTeamValidator = [
   body('name')

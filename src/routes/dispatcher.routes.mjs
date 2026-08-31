@@ -76,5 +76,11 @@ router.patch(
   validate,
   dispatcherController.updateAssignmentStatus
 );
+router.patch(
+  '/assignments/:id/cancel',
+  assignmentIdParamValidator,
+  validate,
+  dispatcherController.cancelAssignment
+);
 
 export default router;

@@ -47,7 +47,7 @@ export async function getMyAssignments(req, res) {
       JOIN assignment a       ON a.cluster_id = c.cluster_id
       JOIN teams t            ON t.team_id = a.team_id
       WHERE r.reported_by = $1
-        AND a.status IN ('pending', 'dispatched')
+        AND a.status IN ('pending', 'dispatched', 'cancelled')
       ORDER BY a.created_at DESC;
     `;
 

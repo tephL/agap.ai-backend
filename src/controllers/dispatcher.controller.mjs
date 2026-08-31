@@ -188,3 +188,16 @@ export async function updateAssignmentStatus(req, res) {
         return sendError(res, err, "Failed to update assignment");
     }
 }
+
+export async function cancelAssignment(req, res) {
+    try {
+        const cityId = await cityOfDispatcher(req);
+        if (!cityId) return res.status(404).json({ error: "Assignment not found" });
+
+        const assignmentId = Number(req.params.id);
+        const assignment = await dispatcherServ.cancelAssignment(assignmentId, cityId);
+        return res.json({ assignment });
+    } catch (err) {
+        return sendError(res, err, "Failed to cancel assignment");
+    }
+}
