@@ -129,6 +129,47 @@ export async function getFamilyMembers(familyId) {
   return result.rows;
 }
 
+/**
+ * Returns whether each accepted family member (excluding the requester)
+ * has at least one active (un-resolved) report in the reports table.
+ * An active report is any report whose status is 'open' or 'saved'.
+ * For members with an active report, also returns its report_id so the UI
+ * can deep-link to the report details.
+ */
+export async function getFamilyMembersReportStatus(userId) {
+  const text = `
+    SELECT
+      fm.user_id,
+      EXISTS (
+        SELECT 1
+        FROM reports r
+        WHERE r.reported_by = fm.user_id
+          AND r.status <> 'resolved'
+      ) AS has_active_report,
+      (
+        SELECT r.report_id
+        FROM reports r
+        WHERE r.reported_by = fm.user_id
+          AND r.status <> 'resolved'
+        ORDER BY r.created_at DESC
+        LIMIT 1
+      ) AS active_report_id
+    FROM family_members fm
+    JOIN family_members self
+      ON self.family_id = fm.family_id
+     AND self.user_id = $1
+     AND self.status = 'accepted'
+    WHERE fm.status = 'accepted'
+      AND fm.user_id <> $1;
+  `;
+  const result = await query(text, [userId]);
+  return result.rows.map((row) => ({
+    user_id: row.user_id,
+    has_active_report: Boolean(row.has_active_report),
+    active_report_id: row.active_report_id ?? null,
+  }));
+}
+
 export async function isAcceptedMember(familyId, userId) {
   const result = await query(
     `SELECT 1 FROM family_members WHERE family_id = $1 AND user_id = $2 AND status = 'accepted'`,
