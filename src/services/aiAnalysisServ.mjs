@@ -280,7 +280,7 @@ function computeClusterStats(reports) {
   const dominantType = Object.entries(disasterCounts)
     .sort((a, b) => b[1] - a[1])[0]?.[0] || 'other';
 
-  const priority = computePriority(maxSeverity, totalPeople, reports.length);
+  const priority = computePriorityScore(maxSeverity, totalPeople, reports.length);
 
   const mergedSummaries = summaries.length <= 2
     ? summaries.join(' ')
@@ -300,10 +300,27 @@ function computeClusterStats(reports) {
   return stats;
 }
 
-function computePriority(maxSeverity, totalPeople, reportCount) {
-  if (maxSeverity === 'critical' || maxSeverity === 'high') return 'high';
-  if (maxSeverity === 'medium' && (reportCount >= 3 || totalPeople >= 8)) return 'high';
-  if (reportCount >= 3 || totalPeople >= 8) return 'medium';
+function computePriorityScore(maxSeverity, totalPeople, reportCount) {
+  let score = 0;
+
+  // Severity component (max 4)
+  if (maxSeverity === 'critical') score += 4;
+  else if (maxSeverity === 'high') score += 3;
+  else if (maxSeverity === 'medium') score += 2;
+  else score += 1;
+
+  // Volume component (max 3)
+  if (reportCount >= 5) score += 3;
+  else if (reportCount >= 3) score += 2;
+  else if (reportCount >= 2) score += 1;
+
+  // People component (max 3)
+  if (totalPeople >= 15) score += 3;
+  else if (totalPeople >= 8) score += 2;
+  else if (totalPeople >= 3) score += 1;
+
+  if (score >= 7) return 'high';
+  if (score >= 4) return 'medium';
   return 'low';
 }
 

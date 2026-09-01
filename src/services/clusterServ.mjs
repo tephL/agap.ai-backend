@@ -236,14 +236,6 @@ export async function updateClusterStats(cluster_id) {
           longitude = sub.avg_lon,
           report_count = sub.cnt,
           people_affected = GREATEST(sub.people_sum, sub.ai_people_max),
-          priority_level = CASE
-            WHEN sub.max_severity IN ('critical', 'high') THEN 'high'
-            WHEN sub.max_severity = 'medium' AND (sub.cnt >= 3 OR sub.ai_people_max >= 8) THEN 'high'
-            WHEN sub.cnt >= 3 OR sub.ai_people_max >= 8 THEN 'medium'
-            WHEN sub.cnt >= 5 OR sub.people_sum >= 20 THEN 'high'
-            WHEN sub.cnt >= 3 OR sub.people_sum >= 8 THEN 'medium'
-            ELSE 'low'
-          END,
           ai_severity = sub.max_severity,
           ai_analyzed_at = CASE WHEN sub.max_severity IS NOT NULL THEN now() ELSE c.ai_analyzed_at END,
           updated_at = now()
