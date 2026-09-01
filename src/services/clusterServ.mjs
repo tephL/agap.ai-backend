@@ -3,7 +3,7 @@ import { query } from '#/services/db.mjs';
 // Distance (in meters) within which a new report is merged into an existing
 // cluster instead of starting a new one. Configurable via CLUSTER_RADIUS_M so
 // operators can tune it per deployment context (dense urban vs sparse rural).
-const EPS_METERS = Number(process.env.CLUSTER_RADIUS_M) || 400;
+const EPS_METERS = Number(process.env.CLUSTER_RADIUS_M) || 300;
 
 export async function getClustersFromCityOfDispatcher(user_id){
   try{
