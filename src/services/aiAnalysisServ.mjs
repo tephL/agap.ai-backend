@@ -264,7 +264,7 @@ function computeClusterStats(reports) {
   const summaries = [];
 
   for (const r of reports) {
-    if (r.ai_people_estimate) totalPeople = Math.max(totalPeople, r.ai_people_estimate);
+    if (r.ai_people_estimate) totalPeople += r.ai_people_estimate;
 
     if (r.ai_severity && SEVERITY_RANK[r.ai_severity] > SEVERITY_RANK[maxSeverity]) {
       maxSeverity = r.ai_severity;

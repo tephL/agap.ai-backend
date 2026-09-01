@@ -235,7 +235,7 @@ export async function updateClusterStats(cluster_id) {
       SET latitude = sub.avg_lat,
           longitude = sub.avg_lon,
           report_count = sub.cnt,
-          people_affected = GREATEST(sub.people_sum, sub.ai_people_max),
+          people_affected = sub.ai_people_sum,
           ai_severity = sub.max_severity,
           ai_analyzed_at = CASE WHEN sub.max_severity IS NOT NULL THEN now() ELSE c.ai_analyzed_at END,
           updated_at = now()
@@ -245,9 +245,8 @@ export async function updateClusterStats(cluster_id) {
           AVG(r.latitude) AS avg_lat,
           AVG(r.longitude) AS avg_lon,
           COUNT(*) AS cnt,
-          COALESCE(SUM(r.people_affected), 0) AS people_sum,
           MAX(r.ai_severity) AS max_severity,
-          COALESCE(MAX(r.ai_people_estimate), 0) AS ai_people_max
+          COALESCE(SUM(r.ai_people_estimate), 0) AS ai_people_sum
         FROM report_clusters rc
         JOIN reports r ON r.report_id = rc.report_id
         WHERE rc.cluster_id = $1
