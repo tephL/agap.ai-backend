@@ -50,10 +50,10 @@ export async function uploadReportedImage(req, res){
 
 export async function reportWithLocation(req, res) {
   try {
-    const { latitude, longitude } = matchedData(req);
+    const { latitude, longitude, hazard_level_25yr } = matchedData(req);
     const { user_id } = whoIsUser(req);
 
-    const report = await reportServ.logReportWithCoordinates({ latitude, longitude, user_id });
+    const report = await reportServ.logReportWithCoordinates({ latitude, longitude, user_id, hazard_level_25yr });
     const { report_id } = report;
 
     let nearest = await clusterServ.getNearestCluster({ latitude, longitude });

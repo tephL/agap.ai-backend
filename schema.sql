@@ -3764,13 +3764,15 @@ CREATE TABLE public.reports (
     ai_summary text,
     status character varying(10) DEFAULT 'open'::character varying,
     people_affected integer,
+    hazard_level_25yr smallint,
     ai_severity character varying(20),
     ai_disaster_type character varying(50),
     ai_people_estimate integer,
     ai_action_plan jsonb DEFAULT '[]'::jsonb,
     ai_analyzed_at timestamp with time zone,
     ai_raw_response jsonb,
-    CONSTRAINT reports_status_check CHECK (((status)::text = ANY ((ARRAY['open'::character varying, 'saved'::character varying, 'resolved'::character varying])::text[])))
+    CONSTRAINT reports_status_check CHECK (((status)::text = ANY ((ARRAY['open'::character varying, 'saved'::character varying, 'resolved'::character varying])::text[]))),
+    CONSTRAINT reports_hazard_level_25yr_check CHECK ((hazard_level_25yr IS NULL OR (hazard_level_25yr = ANY (ARRAY[1, 2, 3]))))
 );
 
 

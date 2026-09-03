@@ -50,10 +50,15 @@ Mga alituntunin:
 Konteksto:${context || '\n- Walang karagdagang konteksto.'}`;
 }
 
-function buildPrompt({ description, location, personDetails }) {
+const HAZARD_LEVEL_LABELS = { 1: 'Mababa (Low)', 2: 'Katamtaman (Medium)', 3: 'Mataas (High)' };
+
+function buildPrompt({ description, location, personDetails, hazardLevel25yr }) {
   let context = '';
   if (description) context += `\n- Paglalarawan mula sa nag-ulat: "${description}"`;
   if (location) context += `\n- Lokasyon: lat ${location.latitude}, lng ${location.longitude}`;
+  if (hazardLevel25yr != null) {
+    context += `\n- Flood hazard level (25-year return period) sa lokasyon ng nag-ulat: ${HAZARD_LEVEL_LABELS[hazardLevel25yr] || 'Hindi matukoy'}`;
+  }
   if (personDetails) {
     context += '\n- Profile ng nag-ulat:';
     if (personDetails.age != null) context += ` Edad ${personDetails.age}`;
@@ -193,22 +198,22 @@ function bufferToGenerativePart(buffer, mimeType = 'image/jpeg') {
   };
 }
 
-export async function analyzeImage({ imageBuffer, description, location, mimeType, personDetails }) {
-  const prompt = buildPrompt({ description, location, personDetails });
+export async function analyzeImage({ imageBuffer, description, location, mimeType, personDetails, hazardLevel25yr }) {
+  const prompt = buildPrompt({ description, location, personDetails, hazardLevel25yr });
   const imagePart = bufferToGenerativePart(imageBuffer, mimeType || 'image/jpeg');
   return callGemini(prompt, [imagePart]);
 }
 
-export async function analyzeMultipleImages({ imageBuffers, description, location, mimeTypes, personDetails }) {
-  const prompt = buildPrompt({ description, location, personDetails });
+export async function analyzeMultipleImages({ imageBuffers, description, location, mimeTypes, personDetails, hazardLevel25yr }) {
+  const prompt = buildPrompt({ description, location, personDetails, hazardLevel25yr });
   const imageParts = imageBuffers.map((buf, i) =>
     bufferToGenerativePart(buf, mimeTypes?.[i] || 'image/jpeg')
   );
   return callGemini(prompt, imageParts);
 }
 
-export async function analyzeText({ description, location, personDetails }) {
-  const prompt = buildPrompt({ description, location, personDetails });
+export async function analyzeText({ description, location, personDetails, hazardLevel25yr }) {
+  const prompt = buildPrompt({ description, location, personDetails, hazardLevel25yr });
   return callGemini(prompt, null);
 }
 
