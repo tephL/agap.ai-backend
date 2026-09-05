@@ -17,7 +17,13 @@ export async function getClustersFromCityOfDispatcher(user_id){
           c.report_count,
           c.people_affected,
           c.ai_summary,
-          c.action_plan
+          c.action_plan,
+          (
+            SELECT MAX(r_h.hazard_level_25yr)
+            FROM report_clusters rc_h
+            JOIN reports r_h ON r_h.report_id = rc_h.report_id
+            WHERE rc_h.cluster_id = c.cluster_id
+          ) AS flood_hazard_25yr
       FROM clusters c
       WHERE c.city_id = 1;
     `;
@@ -44,6 +50,12 @@ export async function getReportsInCluster({ user_id, cluster_id }) {
           c.people_affected,
           c.ai_summary,
           c.action_plan,
+          (
+            SELECT MAX(r_h.hazard_level_25yr)
+            FROM report_clusters rc_h
+            JOIN reports r_h ON r_h.report_id = rc_h.report_id
+            WHERE rc_h.cluster_id = c.cluster_id
+          ) AS flood_hazard_25yr,
           ci.name AS city,
           c.created_at,
           c.updated_at
@@ -65,6 +77,7 @@ export async function getReportsInCluster({ user_id, cluster_id }) {
           r.ai_summary,
           r.status,
           r.people_affected,
+          r.hazard_level_25yr,
           r.created_at,
           ru.user_id AS reporter_user_id,
           ru.username AS reporter_username,

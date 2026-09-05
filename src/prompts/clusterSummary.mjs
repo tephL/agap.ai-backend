@@ -10,7 +10,10 @@ const DISASTER_TYPES = [
   'storm_surge', 'collapse', 'other',
 ];
 
-export function buildClusterPrompt({ reports, totalPeople, reportCount }) {
+// Matches the app's flood legend (`Var` 1/2/3 in the flood_25yr archive).
+const FLOOD_HAZARD_LEVELS = ['Mababa', 'Katamtaman', 'Mataas'];
+
+export function buildClusterPrompt({ reports, totalPeople, reportCount, floodHazard }) {
   const reportSummaries = reports
     .filter(r => r.ai_summary)
     .map((r, i) => {
@@ -27,6 +30,10 @@ export function buildClusterPrompt({ reports, totalPeople, reportCount }) {
     if (r.ai_disaster_type) disasterBreakdown[r.ai_disaster_type] = (disasterBreakdown[r.ai_disaster_type] || 0) + 1;
   }
 
+  const floodHazardLine = floodHazard != null && FLOOD_HAZARD_LEVELS[floodHazard - 1]
+    ? `\n- Flood hazard (25yr return): ${FLOOD_HAZARD_LEVELS[floodHazard - 1]}`
+    : '';
+
   return `${CLUSTER_SYSTEM_PROMPT}
 
 Binibigyan ka ng datos mula sa ${reportCount} ulat ng emerhensya sa iisang cluster. Pagsamahin ang mga ito sa iisang magkakaugnay na buod ng cluster at plano ng aksyon.
@@ -38,7 +45,7 @@ Estadistika ng cluster:
 - Kabuuang ulat: ${reportCount}
 - Kabuuang taong apektado: ${totalPeople}
 - Pagkakabaha-bahagi ng severity: ${JSON.stringify(severityBreakdown)}
-- Pagkakabaha-bahagi ng uri ng kalamidad: ${JSON.stringify(disasterBreakdown)}
+- Pagkakabaha-bahagi ng uri ng kalamidad: ${JSON.stringify(disasterBreakdown)}${floodHazardLine}
 
 Ibalik LANG ang valid na JSON object (walang markdown, walang backticks) na may mga field na ito:
 {
