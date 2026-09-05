@@ -11,4 +11,8 @@ export const locationValidator = [
     .bail()
     .isFloat({ min: -180, max: 180 }).withMessage("Longitude must be between -180 and 180")
     .toFloat(),
+  body("hazard_level_25yr")
+    .optional({ values: "null" })
+    .isInt({ min: 1, max: 3 }).withMessage("hazard_level_25yr must be 1 (low), 2 (medium) or 3 (high)")
+    .toInt(),
 ];

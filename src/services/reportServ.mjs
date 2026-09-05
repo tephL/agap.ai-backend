@@ -8,10 +8,10 @@ export class ReportDispatchedError extends Error {
   }
 }
 
-export async function logReportWithCoordinates({ latitude, longitude, user_id }){
+export async function logReportWithCoordinates({ latitude, longitude, hazard_level_25yr = null, user_id }){
     try{
-        const text = "INSERT INTO reports(latitude, longitude, reported_by) VALUES($1, $2, $3) RETURNING *;";
-        const values = [latitude, longitude, user_id];
+        const text = "INSERT INTO reports(latitude, longitude, reported_by, hazard_level_25yr) VALUES($1, $2, $3, $4) RETURNING *;";
+        const values = [latitude, longitude, user_id, hazard_level_25yr];
         const report = await query(text, values);
         const logCurrLoc = await userServ.saveUserLocation({ latitude, longitude, user_id });
         return report.rows[0];
@@ -100,6 +100,7 @@ export async function getReportDetailsById({ report_id }){
             SELECT r.report_id,
                    r.latitude,
                    r.longitude,
+                   r.hazard_level_25yr,
                    r.description,
                    r.ai_summary,
                    r.status,
