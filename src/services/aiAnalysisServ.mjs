@@ -23,6 +23,7 @@ export async function analyzeReport({ report_id }) {
           description: report.description || null,
           location,
           personDetails,
+          hazardLevel25yr: report.hazard_level_25yr ?? null,
           mimeTypes: imageBuffers.map(() => 'image/jpeg'),
         });
       }
@@ -34,6 +35,7 @@ export async function analyzeReport({ report_id }) {
         description: report.description || null,
         location,
         personDetails,
+        hazardLevel25yr: report.hazard_level_25yr ?? null,
       });
     }
 
@@ -105,12 +107,20 @@ export async function reevaluateCluster({ cluster_id }) {
     if (!reports.length) return null;
     const stats = computeClusterStats(reports);
 
+    // Worst 25-year flood hazard across the cluster's reports — fed to the
+    // synthesis as context only; the priority score never uses it.
+    const floodHazard = reports.reduce(
+      (max, r) => (r.hazard_level_25yr != null ? Math.max(max, r.hazard_level_25yr) : max),
+      0
+    ) || null;
+
     let aiResult;
     try {
       aiResult = await geminiServ.analyzeCluster({
         reports,
         totalPeople: stats.people_affected,
         reportCount: reports.length,
+        floodHazard,
       });
     } catch (e) {
       console.error(`Gemini cluster analysis failed for cluster ${cluster_id}, using fallback:`, e.message);
@@ -143,6 +153,7 @@ async function fetchReportWithImages(report_id) {
   const text = `
     SELECT r.report_id, r.latitude, r.longitude, r.description,
            r.reported_by,
+           r.hazard_level_25yr,
            r.ai_summary AS existing_summary
     FROM reports r
     WHERE r.report_id = $1;
@@ -210,7 +221,8 @@ async function fetchReportsForCluster(cluster_id) {
            r.ai_severity,
            r.ai_disaster_type,
            r.ai_people_estimate,
-           r.ai_action_plan
+           r.ai_action_plan,
+           r.hazard_level_25yr
     FROM report_clusters rc
     JOIN reports r ON r.report_id = rc.report_id
     WHERE rc.cluster_id = $1

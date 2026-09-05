@@ -13,6 +13,7 @@ import myAssignmentsRoute from '#/routes/myAssignments.route.mjs';
 import publicTeamsRoute from '#/routes/publicTeams.route.mjs';
 import aiAssistantRoutes from '#/routes/aiAssistant.routes.mjs';
 import typhoonRoutes from '#/routes/typhoonRoutes.mjs';
+import elevationRoutes from '#/routes/elevationRoutes.mjs';
 
 import cors from '#/config/cors.mjs';
 import { startClusterCleanupJob } from '#/jobs/clusterCleanupJob.mjs';
@@ -36,6 +37,7 @@ app.use('/api/my-assignments', myAssignmentsRoute);
 app.use('/api/public-teams', publicTeamsRoute);
 app.use('/api/ai', aiAssistantRoutes);
 app.use('/api/typhoons', typhoonRoutes);
+app.use('/api/elevation', elevationRoutes);
 app.get('/hp', (req, res) => { return res.sendStatus(200) });
 app.use((req, res) => res.sendStatus(404));
 

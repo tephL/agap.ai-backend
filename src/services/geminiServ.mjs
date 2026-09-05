@@ -9,6 +9,13 @@ const DISASTER_TYPES = [
   'storm_surge', 'collapse', 'other',
 ];
 
+// Matches the app's flood legend: `Var` 1/2/3 in the flood_25yr archive.
+const FLOOD_HAZARD_LABELS = {
+  1: 'Mababa (0–0.5 m na lalim ng tubig)',
+  2: 'Katamtaman (0.5–1.5 m na lalim ng tubig)',
+  3: 'Mataas (higit sa 1.5 m na lalim ng tubig)',
+};
+
 const SYSTEM_PROMPT = `Ikaw ay isang AI na tumutugon sa mga kaganapang pang-emergency para sa isang disaster reporting system sa Pilipinas. Wastong suriin ang datos ng ulat at magbigay ng JSON na tugon. Tiyakin na ang bawat detalye ay may kinalaman sa emerhensya o kalamidad. Huwag magbigay ng impormasyon na wala sa paksa.
 
 MGA PANGUNAHING TUNTUNIN (para sa lahat ng teksto):
@@ -50,10 +57,13 @@ Mga alituntunin:
 Konteksto:${context || '\n- Walang karagdagang konteksto.'}`;
 }
 
-function buildPrompt({ description, location, personDetails }) {
+function buildPrompt({ description, location, personDetails, hazardLevel25yr }) {
   let context = '';
   if (description) context += `\n- Paglalarawan mula sa nag-ulat: "${description}"`;
   if (location) context += `\n- Lokasyon: lat ${location.latitude}, lng ${location.longitude}`;
+  if (hazardLevel25yr != null && FLOOD_HAZARD_LABELS[hazardLevel25yr]) {
+    context += `\n- Hazard (flood_25yr): ${FLOOD_HAZARD_LABELS[hazardLevel25yr]}`;
+  }
   if (personDetails) {
     context += '\n- Profile ng nag-ulat:';
     if (personDetails.age != null) context += ` Edad ${personDetails.age}`;
@@ -193,22 +203,22 @@ function bufferToGenerativePart(buffer, mimeType = 'image/jpeg') {
   };
 }
 
-export async function analyzeImage({ imageBuffer, description, location, mimeType, personDetails }) {
-  const prompt = buildPrompt({ description, location, personDetails });
+export async function analyzeImage({ imageBuffer, description, location, mimeType, personDetails, hazardLevel25yr }) {
+  const prompt = buildPrompt({ description, location, personDetails, hazardLevel25yr });
   const imagePart = bufferToGenerativePart(imageBuffer, mimeType || 'image/jpeg');
   return callGemini(prompt, [imagePart]);
 }
 
-export async function analyzeMultipleImages({ imageBuffers, description, location, mimeTypes, personDetails }) {
-  const prompt = buildPrompt({ description, location, personDetails });
+export async function analyzeMultipleImages({ imageBuffers, description, location, mimeTypes, personDetails, hazardLevel25yr }) {
+  const prompt = buildPrompt({ description, location, personDetails, hazardLevel25yr });
   const imageParts = imageBuffers.map((buf, i) =>
     bufferToGenerativePart(buf, mimeTypes?.[i] || 'image/jpeg')
   );
   return callGemini(prompt, imageParts);
 }
 
-export async function analyzeText({ description, location, personDetails }) {
-  const prompt = buildPrompt({ description, location, personDetails });
+export async function analyzeText({ description, location, personDetails, hazardLevel25yr }) {
+  const prompt = buildPrompt({ description, location, personDetails, hazardLevel25yr });
   return callGemini(prompt, null);
 }
 
@@ -230,8 +240,8 @@ async function callClusterGemini(prompt) {
   return validateClusterResult(parsed);
 }
 
-export async function analyzeCluster({ reports, totalPeople, reportCount }) {
-  const prompt = buildClusterPrompt({ reports, totalPeople, reportCount });
+export async function analyzeCluster({ reports, totalPeople, reportCount, floodHazard }) {
+  const prompt = buildClusterPrompt({ reports, totalPeople, reportCount, floodHazard });
   return callClusterGemini(prompt);
 }
 
