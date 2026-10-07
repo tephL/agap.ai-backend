@@ -240,8 +240,8 @@ async function callClusterGemini(prompt) {
   return validateClusterResult(parsed);
 }
 
-export async function analyzeCluster({ reports, totalPeople, reportCount, floodHazard }) {
-  const prompt = buildClusterPrompt({ reports, totalPeople, reportCount, floodHazard });
+export async function analyzeCluster({ reports, totalPeople, reportCount, floodHazard, vulnerableCount = 0 }) {
+  const prompt = buildClusterPrompt({ reports, totalPeople, reportCount, floodHazard, vulnerableCount });
   return callClusterGemini(prompt);
 }
 
