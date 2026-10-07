@@ -13,12 +13,21 @@ const DISASTER_TYPES = [
 // Matches the app's flood legend (`Var` 1/2/3 in the flood_25yr archive).
 const FLOOD_HAZARD_LEVELS = ['Mababa', 'Katamtaman', 'Mataas'];
 
-export function buildClusterPrompt({ reports, totalPeople, reportCount, floodHazard }) {
+// Mirrors isVulnerableReporter in aiAnalysisServ: senior citizen (60+) or may kapansanan.
+function isVulnerableReporter(report) {
+  const age = report.reporter_age != null ? Number(report.reporter_age) : null;
+  const disabilities = report.reporter_disabilities;
+  const hasDisability = Array.isArray(disabilities) ? disabilities.length > 0 : Boolean(disabilities);
+  return (age != null && age >= 60) || hasDisability;
+}
+
+export function buildClusterPrompt({ reports, totalPeople, reportCount, floodHazard, vulnerableCount = 0 }) {
   const reportSummaries = reports
     .filter(r => r.ai_summary)
     .map((r, i) => {
       let entry = `  ${i + 1}. [${r.ai_severity?.toUpperCase() || 'UNKNOWN'}] ${r.ai_summary}`;
       if (r.ai_people_estimate) entry += ` (${r.ai_people_estimate} people)`;
+      if (isVulnerableReporter(r)) entry += ' [NASA PANGANIB: edad 60+ o may kapansanan]';
       return entry;
     })
     .join('\n');
@@ -44,6 +53,7 @@ ${reportSummaries || '  Walang available na buod ng indibidwal na ulat.'}
 Estadistika ng cluster:
 - Kabuuang ulat: ${reportCount}
 - Kabuuang taong apektado: ${totalPeople}
+- May edad 60+ o may kapansanan (vulnerable): ${vulnerableCount}
 - Pagkakabaha-bahagi ng severity: ${JSON.stringify(severityBreakdown)}
 - Pagkakabaha-bahagi ng uri ng kalamidad: ${JSON.stringify(disasterBreakdown)}${floodHazardLine}
 
@@ -59,7 +69,8 @@ Mga alituntunin:
 - CONCISE: Ang ai_summary ay limitado sa 2 pangungusap. Ang ai_action_plan ay maximum 3 aksyon, bawat isa ay maikling parirala.
 - Ang buod ay dapat magbigay sa mga dispatcher ng mabilis na pag-unawa sa pangkalahatang sitwasyon sa lahat ng ulat
 - Tukuyin ang mga pattern: pareho bang uri ng kalamidad ang mga ulat? lumalala ba ang severity?
-- Ang severity ay dapat sumalamin sa pangkalahatang panganib ng cluster (gamitin ang pinakamataas na severity mula sa mga indibidwal na ulat bilang baseline, ngunit isaalang-alang ang mga kababalagang nagpapalala)
+- Ang severity ay dapat sumalamin sa pangkalahatang panganib ng cluster (gamitin ang pinakamataas na severity mula sa mga indibidwal na ulat bilang baseline, ngunit isaalang-alang ang mga kababalaghang nagpapalala)
+- Kung may mga miyembro na edad 60+ o may kapansanan na naapektuhan, isaalang-alang ito bilang nagpapalala — huwag bumaba sa pinakamataas na severity ng mga indibidwal na ulat, at itaas ang severity kung ang panganib ay direktang nagbabanta sa kanila
 - Ang uri ng kalamidad ay dapat ang pinakanangingibabaw na uri sa lahat ng ulat
 - Ang plano ng aksyon ay dapat nakatuon sa koordinasyon ng tugon sa antas ng cluster, hindi sa mga aksyon ng indibidwal na ulat
 - Isaalang-alang ang mga kababalagang nagpapalala: maraming ulat sa iisang lugar ay maaaring nagpapahiwatig ng kumakalat na kalamidad

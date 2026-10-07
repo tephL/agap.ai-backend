@@ -121,6 +121,7 @@ export async function reevaluateCluster({ cluster_id }) {
         totalPeople: stats.people_affected,
         reportCount: reports.length,
         floodHazard,
+        vulnerableCount: stats.vulnerable_count,
       });
     } catch (e) {
       console.error(`Gemini cluster analysis failed for cluster ${cluster_id}, using fallback:`, e.message);
@@ -222,9 +223,13 @@ async function fetchReportsForCluster(cluster_id) {
            r.ai_disaster_type,
            r.ai_people_estimate,
            r.ai_action_plan,
-           r.hazard_level_25yr
+           r.hazard_level_25yr,
+           p.age AS reporter_age,
+           p.disabilities AS reporter_disabilities
     FROM report_clusters rc
     JOIN reports r ON r.report_id = rc.report_id
+    LEFT JOIN users u ON u.user_id = r.reported_by
+    LEFT JOIN people p ON p.person_id = u.person_id
     WHERE rc.cluster_id = $1
       AND r.ai_analyzed_at IS NOT NULL
       AND r.status != 'resolved';
@@ -239,18 +244,30 @@ async function fetchReportsForCluster(cluster_id) {
 
 const SEVERITY_RANK = { critical: 4, high: 3, medium: 2, low: 1 };
 
+// Vulnerable reporter: senior citizen (60+ per RA 9994) or has a disability.
+function isVulnerableReporter(report) {
+  const age = report.reporter_age != null ? Number(report.reporter_age) : null;
+  const disabilities = report.reporter_disabilities;
+  const hasDisability = Array.isArray(disabilities) ? disabilities.length > 0 : Boolean(disabilities);
+  return (age != null && age >= 60) || hasDisability;
+}
+
 // Deterministic responder-side action plan for a cluster. Notably it does NOT
 // reuse individual reports' action plans: those are written for the citizen
 // reporting the incident (personal safety steps), whereas the cluster-level
 // plan shown to dispatchers/responders must be about coordinating the response.
 function buildResponderActionPlan(stats) {
   const plan = [];
-  const { dominantType: type, maxSeverity, reportCount, people_affected: people } = stats;
+  const { dominantType: type, maxSeverity, reportCount, people_affected: people, vulnerable_count: vulnerable } = stats;
 
   if (maxSeverity === 'critical' || maxSeverity === 'high') {
     plan.push(`Ipapadala agad ang rescue/response team sa cluster (${reportCount} ulat, ${people} apektado)`);
   } else if (reportCount >= 3 || people >= 8) {
     plan.push(`Mag-coordinate ng response team para sa maraming ulat sa lugar`);
+  }
+
+  if (vulnerable > 0) {
+    plan.push(`Prayoridad ang mga nasa panganib na miyembro (${vulnerable}: edad 60+ o may kapansanan)`);
   }
 
   const typeActions = {
@@ -272,6 +289,7 @@ function buildResponderActionPlan(stats) {
 function computeClusterStats(reports) {
   let totalPeople = 0;
   let maxSeverity = 'low';
+  let vulnerableCount = 0;
   const disasterCounts = {};
   const summaries = [];
 
@@ -281,6 +299,8 @@ function computeClusterStats(reports) {
     if (r.ai_severity && SEVERITY_RANK[r.ai_severity] > SEVERITY_RANK[maxSeverity]) {
       maxSeverity = r.ai_severity;
     }
+
+    if (isVulnerableReporter(r)) vulnerableCount++;
 
     if (r.ai_disaster_type) {
       disasterCounts[r.ai_disaster_type] = (disasterCounts[r.ai_disaster_type] || 0) + 1;
@@ -292,7 +312,7 @@ function computeClusterStats(reports) {
   const dominantType = Object.entries(disasterCounts)
     .sort((a, b) => b[1] - a[1])[0]?.[0] || 'other';
 
-  const priority = computePriorityScore(maxSeverity, totalPeople, reports.length);
+  const priority = computePriorityScore(maxSeverity, totalPeople, reports.length, vulnerableCount);
 
   const mergedSummaries = summaries.length <= 2
     ? summaries.join(' ')
@@ -304,6 +324,7 @@ function computeClusterStats(reports) {
     priority,
     people_affected: totalPeople,
     report_count: reports.length,
+    vulnerable_count: vulnerableCount,
     mergedSummaries,
   };
 
@@ -312,7 +333,14 @@ function computeClusterStats(reports) {
   return stats;
 }
 
-function computePriorityScore(maxSeverity, totalPeople, reportCount) {
+function computePriorityScore(maxSeverity, totalPeople, reportCount, vulnerableCount = 0) {
+  // A cluster containing at-risk people (seniors 60+ / persons with
+  // disabilities) at high or critical severity is never shown below "high",
+  // even when it is a single report with few people affected.
+  if (vulnerableCount > 0 && (maxSeverity === 'critical' || maxSeverity === 'high')) {
+    return 'high';
+  }
+
   let score = 0;
 
   // Severity component (max 4)
@@ -330,6 +358,9 @@ function computePriorityScore(maxSeverity, totalPeople, reportCount) {
   if (totalPeople >= 15) score += 3;
   else if (totalPeople >= 8) score += 2;
   else if (totalPeople >= 3) score += 1;
+
+  // Vulnerability component (max 2)
+  if (vulnerableCount > 0) score += 2;
 
   if (score >= 7) return 'high';
   if (score >= 4) return 'medium';
