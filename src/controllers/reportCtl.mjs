@@ -34,7 +34,7 @@ export async function uploadReportedImage(req, res){
             req.files.map(file => uploadImageToCloudinary(file.buffer))
         );
 
-        const urls = uploadResults.map(result => result.url);
+        const urls = uploadResults.map(result => result.secure_url);
         await imageServ.logImageUploads({ urls, user_id, report_id });
 
         aiAnalysisServ.analyzeReport({ report_id }).catch(e =>
